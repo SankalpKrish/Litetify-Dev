@@ -57,16 +57,16 @@ Spotify **Client ID**:
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `npm run tauri dev` | Run the full desktop app (Rust core + webview) |
-| `npm run dev` | Vite web-only dev server |
-| `npm run build` | Typecheck + build the frontend bundle |
-| `npm run tauri build` | Produce native installers |
-| `npm run lint` | ESLint (zero-warning policy) |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run format` | Prettier write |
-| `npm test` | Vitest |
+| Command               | What it does                                   |
+| --------------------- | ---------------------------------------------- |
+| `npm run tauri dev`   | Run the full desktop app (Rust core + webview) |
+| `npm run dev`         | Vite web-only dev server                       |
+| `npm run build`       | Typecheck + build the frontend bundle          |
+| `npm run tauri build` | Produce native installers                      |
+| `npm run lint`        | ESLint (zero-warning policy)                   |
+| `npm run typecheck`   | `tsc --noEmit`                                 |
+| `npm run format`      | Prettier write                                 |
+| `npm test`            | Vitest                                         |
 
 ## Project layout
 

@@ -1,7 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimal Phase 0 capability set. Scoped per-feature in later phases (auth, playback, mods).",
+  "description": "Default permissions: auth, API, playback, and mod system.",
   "windows": ["main"],
-  "permissions": ["core:default", "opener:default"]
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
 }

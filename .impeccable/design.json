@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-19T00:00:00.000Z",
+  "title": "Design System: Litetify",
+  "extensions": {
+    "colorMeta": {
+      "bg-base": {
+        "role": "neutral",
+        "displayName": "Deep Charcoal",
+        "canonical": "oklch(12% 0.005 280)",
+        "tonalRamp": ["oklch(5% 0.004 280)", "oklch(8% 0.005 280)", "oklch(12% 0.005 280)", "oklch(18% 0.006 280)", "oklch(28% 0.007 280)", "oklch(42% 0.008 280)", "oklch(60% 0.009 280)", "oklch(80% 0.008 280)"]
+      },
+      "bg-elevated": {
+        "role": "neutral",
+        "displayName": "Slate Black",
+        "canonical": "oklch(15% 0.005 280)",
+        "tonalRamp": ["oklch(5% 0.004 280)", "oklch(9% 0.005 280)", "oklch(15% 0.005 280)", "oklch(21% 0.006 280)", "oklch(30% 0.007 280)", "oklch(44% 0.008 280)", "oklch(62% 0.009 280)", "oklch(82% 0.007 280)"]
+      },
+      "bg-highlight": {
+        "role": "neutral",
+        "displayName": "Iron",
+        "canonical": "oklch(19% 0.008 280)",
+        "tonalRamp": ["oklch(5% 0.004 280)", "oklch(10% 0.005 280)", "oklch(19% 0.008 280)", "oklch(27% 0.009 280)", "oklch(38% 0.01 280)", "oklch(50% 0.01 280)", "oklch(66% 0.01 280)", "oklch(84% 0.008 280)"]
+      },
+      "bg-sidebar": {
+        "role": "neutral",
+        "displayName": "Pitch Slate",
+        "canonical": "oklch(10% 0.005 280)",
+        "tonalRamp": ["oklch(4% 0.004 280)", "oklch(7% 0.005 280)", "oklch(10% 0.005 280)", "oklch(16% 0.005 280)", "oklch(25% 0.006 280)", "oklch(38% 0.007 280)", "oklch(55% 0.008 280)", "oklch(78% 0.007 280)"]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Spotify Green",
+        "canonical": "oklch(69% 0.18 145)",
+        "tonalRamp": ["oklch(15% 0.12 145)", "oklch(28% 0.15 145)", "oklch(40% 0.17 145)", "oklch(52% 0.18 145)", "oklch(62% 0.18 145)", "oklch(69% 0.18 145)", "oklch(78% 0.16 145)", "oklch(90% 0.08 145)"]
+      },
+      "fg-primary": {
+        "role": "neutral",
+        "displayName": "Warm White",
+        "canonical": "oklch(95% 0.003 280)",
+        "tonalRamp": ["oklch(5% 0.002 280)", "oklch(12% 0.003 280)", "oklch(22% 0.003 280)", "oklch(35% 0.003 280)", "oklch(50% 0.003 280)", "oklch(68% 0.003 280)", "oklch(82% 0.003 280)", "oklch(95% 0.003 280)"]
+      },
+      "fg-secondary": {
+        "role": "neutral",
+        "displayName": "Silver Mist",
+        "canonical": "oklch(67% 0.01 280)",
+        "tonalRamp": ["oklch(5% 0.003 280)", "oklch(12% 0.004 280)", "oklch(22% 0.005 280)", "oklch(35% 0.006 280)", "oklch(50% 0.007 280)", "oklch(67% 0.01 280)", "oklch(82% 0.008 280)", "oklch(95% 0.005 280)"]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "oklch(55% 0.2 30)",
+        "tonalRamp": ["oklch(15% 0.12 30)", "oklch(25% 0.15 30)", "oklch(35% 0.18 30)", "oklch(45% 0.2 30)", "oklch(55% 0.2 30)", "oklch(65% 0.18 30)", "oklch(78% 0.14 30)", "oklch(92% 0.06 30)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page-level headings. Home view, playlist detail, artist page titles."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headers. New Releases, Popular Tracks, settings group titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, playlist names, track names in lists."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text, track metadata, descriptions. Max 65ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Secondary metadata, timestamps, tab labels, dense control text."
+      }
+    },
+    "shadows": [
+      { "name": "hover-glow", "value": "0 1px 2px rgba(0, 0, 0, 0.3)", "purpose": "Subtle lift on hovered interactive elements." },
+      { "name": "popover-float", "value": "0 4px 12px rgba(0, 0, 0, 0.4)", "purpose": "Dropdowns, device selector, context menus." },
+      { "name": "modal-depth", "value": "0 8px 24px rgba(0, 0, 0, 0.5)", "purpose": "Large overlays, dialogs." }
+    ],
+    "motion": [
+      { "name": "ease-fast", "value": "0.15s ease", "purpose": "Default easing for color/background transitions." },
+      { "name": "ease-normal", "value": "0.2s ease", "purpose": "Default easing for opacity and transform transitions." },
+      { "name": "progress-linear", "value": "0.1s linear", "purpose": "Seek progress bar fill updates." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "960px" },
+      { "name": "lg", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "High-emphasis action button. Play, auth, confirm flows.",
+      "html": "<button class=\"ds-btn-primary\">Play</button>",
+      "css": ".ds-btn-primary { all: unset; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 12px 32px; border-radius: 9999px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; font-weight: 500; background: #1db954; color: #000; transition: background 0.15s, transform 0.2s; } .ds-btn-primary:hover { background: #1ed760; transform: translateY(-1px); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral action button. Add to playlist, follow, cancel.",
+      "html": "<button class=\"ds-btn-secondary\">Add to Playlist</button>",
+      "css": ".ds-btn-secondary { all: unset; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 12px 32px; border-radius: 9999px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; font-weight: 500; background: #1a1a1e; color: #f5f5f7; transition: background 0.15s, transform 0.2s; } .ds-btn-secondary:hover { background: rgba(255,255,255,0.1); } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Play Button (Transport)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Central play/pause button in the player transport controls.",
+      "html": "<button class=\"ds-ctrl-play\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M4 2l10 6-10 6V2z\"/></svg></button>",
+      "css": ".ds-ctrl-play { all: unset; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9999px; background: #f5f5f7; color: #0d0d0f; transition: background 0.15s, transform 0.1s; } .ds-ctrl-play:hover { background: rgba(245,245,247,0.85); } .ds-ctrl-play:active { transform: scale(0.92); }"
+    },
+    {
+      "name": "Icon Control Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Small round icon button for shuffle, repeat, volume, device controls.",
+      "html": "<button class=\"ds-ctrl-btn\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M4 2l10 6-10 6V2z\"/></svg></button>",
+      "css": ".ds-ctrl-btn { all: unset; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9999px; color: #9b9ba3; transition: color 0.15s, transform 0.1s; } .ds-ctrl-btn:hover { color: #f5f5f7; } .ds-ctrl-btn:active { transform: scale(0.92); } .ds-ctrl-active { color: #1db954; }"
+    },
+    {
+      "name": "Album Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Square album/playlist card in browse grids and playlist lists.",
+      "html": "<div class=\"ds-card\"><img class=\"ds-card-image\" src=\"https://picsum.photos/180\" alt=\"Album cover\"/><p class=\"ds-card-title\">Album Title</p><p class=\"ds-card-subtitle\">Artist Name</p></div>",
+      "css": ".ds-card { background: #131316; border-radius: 8px; padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 12px; transition: background 0.15s, box-shadow 0.2s, transform 0.2s; } .ds-card:hover { background: #1a1a1e; box-shadow: 0 1px 2px rgba(0,0,0,0.3); transform: translateY(-2px); } .ds-card-image { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: rgba(255,255,255,0.06); } .ds-card-title { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.9rem; font-weight: 600; color: #f5f5f7; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-card-subtitle { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; color: #9b9ba3; margin: 0; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"
+    },
+    {
+      "name": "Sidebar Navigation Link",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Navigation item in the sidebar. Active state uses Spotify green icon tint.",
+      "html": "<nav class=\"ds-sidebar\"><button class=\"ds-sidebar-link ds-sidebar-link-active\"><svg class=\"ds-sidebar-icon\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z\"/></svg>Home</button><button class=\"ds-sidebar-link\"><svg class=\"ds-sidebar-icon\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M9 2H3v8h6V2zm12 0h-6v8h6V2zM9 14H3v8h6v-8zm12 0h-6v8h6v-8z\"/></svg>Search</button></nav>",
+      "css": ".ds-sidebar-link { all: unset; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.9rem; font-weight: 500; color: #9b9ba3; width: 100%; box-sizing: border-box; transition: color 0.15s, background 0.15s; } .ds-sidebar-link:hover { color: #f5f5f7; background: rgba(255,255,255,0.06); } .ds-sidebar-link-active { color: #f5f5f7; background: #1a1a1e; } .ds-sidebar-icon { width: 20px; height: 20px; opacity: 0.7; flex-shrink: 0; } .ds-sidebar-link-active .ds-sidebar-icon { opacity: 1; color: #1db954; }"
+    },
+    {
+      "name": "Track Row",
+      "kind": "custom",
+      "refersTo": "track-row",
+      "description": "Single track in a playlist or album track list table.",
+      "html": "<div class=\"ds-track-row\"><span class=\"ds-track-number\">3</span><div class=\"ds-track-info\"><p class=\"ds-track-name\">Track Title</p><p class=\"ds-track-artist\">Artist Name</p></div><span class=\"ds-track-duration\">3:45</span></div>",
+      "css": ".ds-track-row { display: grid; grid-template-columns: 32px 1fr auto; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: background 0.15s; } .ds-track-row:hover { background: rgba(255,255,255,0.06); } .ds-track-number { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; color: #6b6b73; text-align: center; font-variant-numeric: tabular-nums; } .ds-track-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .ds-track-name { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.9rem; font-weight: 400; color: #f5f5f7; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-track-artist { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; color: #9b9ba3; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-track-duration { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; color: #9b9ba3; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Progress Bar",
+      "kind": "custom",
+      "refersTo": "progress-bar",
+      "description": "Seekable playback progress bar with time labels.",
+      "html": "<div class=\"ds-progress-area\"><span class=\"ds-progress-time\">1:23</span><div class=\"ds-progress-bar\"><div class=\"ds-progress-fill\" style=\"width: 35%\"></div><div class=\"ds-progress-thumb\" style=\"left: 35%\"></div></div><span class=\"ds-progress-time\">3:45</span></div>",
+      "css": ".ds-progress-area { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 600px; } .ds-progress-time { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.7rem; color: #9b9ba3; font-variant-numeric: tabular-nums; min-width: 36px; } .ds-progress-time:last-child { text-align: right; } .ds-progress-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; cursor: pointer; position: relative; transition: height 0.15s; } .ds-progress-bar:hover { height: 6px; } .ds-progress-fill { height: 100%; background: #f5f5f7; border-radius: 2px; transition: width 0.1s linear; } .ds-progress-bar:hover .ds-progress-fill { background: #1db954; } .ds-progress-thumb { position: absolute; top: 50%; width: 12px; height: 12px; background: #f5f5f7; border-radius: 9999px; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.15s; pointer-events: none; } .ds-progress-bar:hover .ds-progress-thumb { opacity: 1; }"
+    },
+    {
+      "name": "Toast Notification",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Temporary notification appearing above the player bar.",
+      "html": "<div class=\"ds-toast ds-toast-success\"><span>Playlist saved</span><button class=\"ds-toast-close\">&times;</button></div>",
+      "css": ".ds-toast { position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 9999px; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.78rem; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 200; } .ds-toast-info { background: #1a1a1e; color: #f5f5f7; border: 1px solid rgba(255,255,255,0.06); } .ds-toast-success { background: rgba(29,185,84,0.15); color: #1db954; border: 1px solid rgba(29,185,84,0.15); } .ds-toast-error { background: rgba(231,76,60,0.1); color: #e74c3c; border: 1px solid rgba(231,76,60,0.1); } .ds-toast-close { all: unset; cursor: pointer; color: inherit; opacity: 0.6; font-size: 1rem; line-height: 1; } .ds-toast-close:hover { opacity: 1; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Listening Lounge",
+    "overview": "Litetify is a dark, refined desktop music player that puts the album art and the music first. The interface recedes into deep charcoal backgrounds, letting vibrant cover art and the signature Spotify green accent command attention. Every surface is purposeful: the sidebar holds navigation, the main area surfaces content, the player bar sits at the bottom as a persistent control layer. Nothing fights the music. The system rejects the bloat of the official Spotify client (crowded layouts, heavy chrome, inconsistent spacing) and the anonymity of generic Electron apps (bland corporate gray, no character, no soul). It aims for the warmth of a premium listening bar: dim lighting, focused attention, tactile controls that respond to every touch.",
+    "keyCharacteristics": [
+      "Dark-only foundation. Deep charcoal neutrals tinted toward cool blue-black at chroma 0.005.",
+      "One accent voice. Spotify green (oklch(69% 0.18 145)) used on ≤10% of any surface. Its rarity is the point.",
+      "Flat surfaces with responsive shadows. Depth through background layering, not drop shadows at rest.",
+      "Inter at every weight. A single sans family doing the full range from label to display.",
+      "Tactile feedback. Hover states, subtle lifts, and color transitions are immediate and felt."
+    ],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "Spotify green covers ≤10% of any screen. Its rarity gives it weight.", "section": "colors" },
+      { "name": "The Room Is Dark Rule", "body": "Text on dark backgrounds must clear WCAG contrast. Primary text at #f5f5f7 on #0d0d0f (contrast ~16:1) ensures readability. Never go below 4.5:1 for body text.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "Inter covers every role. No second font. Hierarchy comes from weight and size, not typeface changes.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state (hover, open, focus).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do let album art drive the color on each screen. The UI is deliberately neutral so covers and artist imagery provide the visual energy.",
+      "Do use Spotify green as the single accent, and only where action is needed. Play buttons, active nav items, progress bars.",
+      "Do use Inter at every weight. 400 for body, 500 for emphasis, 600 for subheads, 700 for headings. The weight contrast IS the hierarchy.",
+      "Do keep surfaces flat at rest. Use background color for depth layering.",
+      "Do make interactions felt: immediate color transitions (0.2s ease), subtle hover lifts (1px translateY), visible focus rings.",
+      "Do cap body text at 65ch."
+    ],
+    "donts": [
+      "Don't imitate the official Spotify client's layout, chrome, or density.",
+      "Don't look like a generic Electron app.",
+      "Don't use gradient text (background-clip: text with a gradient).",
+      "Don't use glassmorphism or backdrop blur as a decorative default.",
+      "Don't use side-stripe borders (border-left or border-right >1px as a colored accent).",
+      "Don't use em dashes.",
+      "Don't use #000 or #fff. Every neutral is tinted toward the brand hue.",
+      "Don't use identical card grids everywhere.",
+      "Don't open a modal as the first solution."
+    ]
+  }
+}

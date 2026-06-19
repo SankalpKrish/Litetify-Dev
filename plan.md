@@ -29,6 +29,7 @@
    compliance with Spotify ToS. These are the project's tie-breakers.
 
 ### Tie-breaker priorities (in order)
+
 1. Correctness & ToS compliance
 2. Performance (RAM, startup time, binary size)
 3. Moddability / extensibility
@@ -40,6 +41,7 @@
 ## 1. Product Spec (the WHAT)
 
 ### Goals
+
 - A desktop Spotify **Premium** client that is **lighter and faster** than the
   official Electron app (target: cold start < 1.5s, idle RAM < 100MB, binary
   < 25MB).
@@ -49,6 +51,7 @@
 - Cross-platform: Windows, macOS, Linux.
 
 ### Non-goals (v1)
+
 - Offline download / local-file playback.
 - Podcast-specific UI beyond basic episode playback.
 - Mobile / web-hosted build.
@@ -56,9 +59,11 @@
 - Circumventing DRM or Spotify ToS.
 
 ### Target users
+
 Spotify **Premium** subscribers who want a faster, customizable desktop client.
 
 ### Hard constraints (do not violate)
+
 - **Premium-only.** Web Playback SDK and `streaming` scope require Premium.
 - **No client secret** is shipped (desktop app → public client → PKCE).
 - **As of 27 Nov 2025**, Spotify OAuth **removed** `http://` redirect URIs and
@@ -121,18 +126,19 @@ Litetify/
 
 ### Key design decisions
 
-| Decision | Choice | Why |
-|---|---|---|
-| Shell | Tauri v2 | ~12MB binary, ~80MB RAM, webview keeps UI moddable via CSS/JS |
-| UI | React + TS + Vite | Fast HMR, large ecosystem, easy to expose a mod API |
-| State/data | TanStack Query + Zustand | Cache Spotify API, minimal boilerplate |
-| Auth | PKCE + loopback 127.0.0.1 | Required post-Nov-2025; no secret on client |
-| Token storage | OS keychain via Tauri plugin | Never plaintext |
-| Playback | `PlaybackEngine` trait, 2 impls | Web SDK = compliant default; librespot = opt-in power |
-| Modding | Manifest + loader + sandbox + `window.Litetify` API | Spicetify parity |
-| Styling | CSS custom properties as the theming contract | Themes override tokens, not internals |
+| Decision      | Choice                                              | Why                                                           |
+| ------------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| Shell         | Tauri v2                                            | ~12MB binary, ~80MB RAM, webview keeps UI moddable via CSS/JS |
+| UI            | React + TS + Vite                                   | Fast HMR, large ecosystem, easy to expose a mod API           |
+| State/data    | TanStack Query + Zustand                            | Cache Spotify API, minimal boilerplate                        |
+| Auth          | PKCE + loopback 127.0.0.1                           | Required post-Nov-2025; no secret on client                   |
+| Token storage | OS keychain via Tauri plugin                        | Never plaintext                                               |
+| Playback      | `PlaybackEngine` trait, 2 impls                     | Web SDK = compliant default; librespot = opt-in power         |
+| Modding       | Manifest + loader + sandbox + `window.Litetify` API | Spicetify parity                                              |
+| Styling       | CSS custom properties as the theming contract       | Themes override tokens, not internals                         |
 
 ### The `PlaybackEngine` abstraction (critical)
+
 Define a single trait/interface so the rest of the app never hard-codes a
 backend:
 
@@ -150,6 +156,7 @@ pub trait PlaybackEngine: Send + Sync {
     fn name(&self) -> &'static str; // "websdk" | "librespot"
 }
 ```
+
 - `WebSdkEngine`: thin bridge — actual playback runs in the webview JS SDK;
   Rust forwards commands/state over IPC. **Default, always built.**
 - `LibrespotEngine`: native audio via the `librespot` crate. **Feature-gated**
@@ -159,15 +166,15 @@ pub trait PlaybackEngine: Send + Sync {
 
 ## 3. Risk Register (read before building)
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| OAuth redirect rules changed Nov 2025 (no localhost/http) | Auth breaks | Use `http://127.0.0.1:<port>/callback` loopback IP; register URI in dashboard exactly |
-| Web Playback SDK needs Widevine DRM in webview | No audio on some Linux WebKitGTK | Document Widevine requirement; librespot is the Linux fallback |
-| librespot is unofficial → ToS gray area + breakage | Account risk / maintenance | Off by default, feature-gated, explicit user opt-in + warning |
-| Spotify API rate limits (429) | Stutter / bans | Centralized API client with backoff + retry-after honoring |
-| Malicious mods (JS extensions) | Security | Sandbox extensions, scoped `Litetify` API, no raw Node/Tauri access, user consent on install |
-| Token leakage | Account compromise | Keychain only; never log tokens; redact in errors |
-| Webview perf regression vs native | Defeats purpose | Budget checks each phase gate (RAM/start time) |
+| Risk                                                      | Impact                           | Mitigation                                                                                   |
+| --------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| OAuth redirect rules changed Nov 2025 (no localhost/http) | Auth breaks                      | Use `http://127.0.0.1:<port>/callback` loopback IP; register URI in dashboard exactly        |
+| Web Playback SDK needs Widevine DRM in webview            | No audio on some Linux WebKitGTK | Document Widevine requirement; librespot is the Linux fallback                               |
+| librespot is unofficial → ToS gray area + breakage        | Account risk / maintenance       | Off by default, feature-gated, explicit user opt-in + warning                                |
+| Spotify API rate limits (429)                             | Stutter / bans                   | Centralized API client with backoff + retry-after honoring                                   |
+| Malicious mods (JS extensions)                            | Security                         | Sandbox extensions, scoped `Litetify` API, no raw Node/Tauri access, user consent on install |
+| Token leakage                                             | Account compromise               | Keychain only; never log tokens; redact in errors                                            |
+| Webview perf regression vs native                         | Defeats purpose                  | Budget checks each phase gate (RAM/start time)                                               |
 
 ---
 
@@ -211,6 +218,7 @@ pub trait PlaybackEngine: Send + Sync {
   - Acceptance: docs render; README explains Premium-only + how to set Client ID.
 
 **Phase 0 Gate:**
+
 - [ ] `npm run tauri dev` runs and shows a window.
 - [ ] `npm run tauri build` succeeds locally.
 - [ ] Lint + typecheck clean.
@@ -248,8 +256,8 @@ a valid, auto-refreshing access token stored in the OS keychain.
   - File: `src-tauri/src/auth/mod.rs`.
   - Build authorize URL with scopes:
     `streaming user-read-email user-read-private user-read-playback-state
-     user-modify-playback-state user-library-read user-library-modify
-     playlist-read-private playlist-read-collaborative`.
+ user-modify-playback-state user-library-read user-library-modify
+ playlist-read-private playlist-read-collaborative`.
   - Open system browser to authorize URL (Tauri opener).
   - On callback `code`, POST to `/api/token` with PKCE verifier (no secret) to
     get `access_token`, `refresh_token`, `expires_in`.
@@ -277,6 +285,7 @@ a valid, auto-refreshing access token stored in the OS keychain.
   - Acceptance: app with no Client ID prompts for one; valid ID enables login.
 
 **Phase 1 Gate:**
+
 - [ ] Full PKCE login works against real Spotify.
 - [ ] Token persists across restarts and auto-refreshes.
 - [ ] No token/secret in git, logs, or plaintext on disk.
@@ -307,6 +316,7 @@ a valid, auto-refreshing access token stored in the OS keychain.
   - Acceptance: `typecheck` passes; no `any` in API surface.
 
 **Phase 2 Gate:**
+
 - [ ] Authenticated calls to `/me`, playlists, search succeed.
 - [ ] Rate-limit + 401-refresh-retry paths covered by tests.
 - [ ] Access token never exposed to the renderer.
@@ -352,6 +362,7 @@ a valid, auto-refreshing access token stored in the OS keychain.
   - Acceptance: starting playback elsewhere reflects in Litetify and vice versa.
 
 **Phase 3 Gate:**
+
 - [ ] Track plays end-to-end on the Litetify device (Premium).
 - [ ] All transport controls work through the `PlaybackEngine` interface.
 - [ ] No backend type is referenced directly by UI code.
@@ -391,6 +402,7 @@ a valid, auto-refreshing access token stored in the OS keychain.
     theming surface works before the mod system exists).
 
 **Phase 4 Gate:**
+
 - [ ] Browse, search, and library are fully navigable and playable.
 - [ ] Every visual style flows through CSS custom properties (no hardcoded
       colors in components).
@@ -464,6 +476,7 @@ a valid, auto-refreshing access token stored in the OS keychain.
     extension without reading source.
 
 **Phase 5 Gate:**
+
 - [ ] Themes, extensions, and custom apps all load from `mods/` with no rebuild.
 - [ ] `window.Litetify` API is documented and versioned.
 - [ ] Sandbox blocks token theft, arbitrary IPC, and exfiltration (verified).
@@ -495,6 +508,7 @@ abstraction and **off by default**.
     controls to the selected engine; default remains Web SDK.
 
 **Phase 6 Gate:**
+
 - [ ] Default build has no librespot code/deps.
 - [ ] Opt-in build plays audio natively via the same interface.
 - [ ] User sees and must accept the unofficial-engine warning.
@@ -543,6 +557,7 @@ abstraction and **off by default**.
     and install a mod using only the docs.
 
 **Phase 7 Gate (v1 Definition of Done):**
+
 - [ ] Performance budgets met and recorded.
 - [ ] Signed installers for Windows, macOS, Linux.
 - [ ] Auto-update configured.
@@ -557,17 +572,17 @@ abstraction and **off by default**.
 Invoke these skills (from `.agents/skills`) at the tasks indicated. Always
 follow the using-superpowers rule: if a skill might apply, invoke it.
 
-| Skill | Use it for |
-|---|---|
-| `gsd-new-project` | Phase 0 project initialization |
-| `tdd` | Auth crypto (1.1), API retry logic, manifest validation — test-first |
-| `frontend-design` | Login (1.5), player UI (3.4), core UI (Phase 4), settings (5.7) |
-| `full-output-enforcement` | Large, complete files (API client, engines) — no placeholders |
-| `fixing-motion-performance` | Phase 7 performance pass |
-| `gsd-code-review` | Phase 7 review |
-| `gsd-secure-phase` | Mod sandbox (5.5) + final security audit (7.5) |
-| `gsd-execute-phase` / `gsd-plan-phase` | If you want finer-grained per-phase planning/execution |
-| `ui-ux-pro-max` / `impeccable` | Optional: deeper UI polish on Phase 4/7 |
+| Skill                                  | Use it for                                                           |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| `gsd-new-project`                      | Phase 0 project initialization                                       |
+| `tdd`                                  | Auth crypto (1.1), API retry logic, manifest validation — test-first |
+| `frontend-design`                      | Login (1.5), player UI (3.4), core UI (Phase 4), settings (5.7)      |
+| `full-output-enforcement`              | Large, complete files (API client, engines) — no placeholders        |
+| `fixing-motion-performance`            | Phase 7 performance pass                                             |
+| `gsd-code-review`                      | Phase 7 review                                                       |
+| `gsd-secure-phase`                     | Mod sandbox (5.5) + final security audit (7.5)                       |
+| `gsd-execute-phase` / `gsd-plan-phase` | If you want finer-grained per-phase planning/execution               |
+| `ui-ux-pro-max` / `impeccable`         | Optional: deeper UI polish on Phase 4/7                              |
 
 > If unsure whether a UI task needs a skill: it does — invoke `frontend-design`.
 

@@ -49,15 +49,15 @@ Litetify/
 
 ## Key decisions
 
-| Decision | Choice | Why |
-| --- | --- | --- |
-| Shell | Tauri v2 | ~12MB binary, ~80MB RAM; webview keeps UI moddable via CSS/JS |
-| UI | React + TS + Vite | Fast HMR, large ecosystem, easy to expose a mod API |
-| Auth | PKCE + loopback `127.0.0.1` | Required post-2025-11-27; no secret on a public client |
-| Token storage | OS keychain | Never plaintext, never git |
-| Playback | `PlaybackEngine` trait, 2 impls | Web SDK = compliant default; librespot = opt-in |
-| Modding | Manifest + loader + sandbox + `window.Litetify` | Spicetify parity |
-| Styling | CSS custom properties | Themes override tokens, not internals |
+| Decision      | Choice                                          | Why                                                           |
+| ------------- | ----------------------------------------------- | ------------------------------------------------------------- |
+| Shell         | Tauri v2                                        | ~12MB binary, ~80MB RAM; webview keeps UI moddable via CSS/JS |
+| UI            | React + TS + Vite                               | Fast HMR, large ecosystem, easy to expose a mod API           |
+| Auth          | PKCE + loopback `127.0.0.1`                     | Required post-2025-11-27; no secret on a public client        |
+| Token storage | OS keychain                                     | Never plaintext, never git                                    |
+| Playback      | `PlaybackEngine` trait, 2 impls                 | Web SDK = compliant default; librespot = opt-in               |
+| Modding       | Manifest + loader + sandbox + `window.Litetify` | Spicetify parity                                              |
+| Styling       | CSS custom properties                           | Themes override tokens, not internals                         |
 
 ## The `PlaybackEngine` abstraction
 
