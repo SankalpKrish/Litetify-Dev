@@ -10,8 +10,8 @@ build/
 src-tauri/target/
 
 # User-installed mods (local only, never tracked)
-mods/
-!mods/examples/
+/mods/*
+!/mods/examples/
 
 # Secrets / env
 .env

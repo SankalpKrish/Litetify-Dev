@@ -13,14 +13,28 @@ extensions, and custom apps.
 
 ## Status
 
-**Phases 1-4 complete, Phase 5 in progress.** A functional desktop Spotify client with:
+**Phases 1-5 complete.** A production-ready desktop Spotify client with:
 
 - **Spotify OAuth** via PKCE — login, token refresh, OS keychain storage
 - **Playback** via Spotify Web Playback SDK — play/pause/seek/volume/next/prev with full transport controls
 - **Library browsing** — playlists, liked songs, albums, artists, search
 - **Home/Browse** — featured, new releases, recommendations
 - **Design system** — CSS custom property tokens, dark theme, Inter type scale, responsive layout
-- **Mod system** — manifest validation, theme engine, extension sandbox, custom apps (settings UI, theme injection, mod store)
+- **Mod system** (Spicetify-parity) — themes, extensions, and custom apps from `mods/` folder with no rebuild
+
+### Mod system
+
+Users can install three types of mods in `mods/`:
+
+| Type | What it does | Example |
+|------|-------------|---------|
+| **Theme** | CSS that overrides design tokens | `mods/examples/dark-theme/` |
+| **Extension** | JS that runs in a sandboxed iframe, interacting only via the `Litetify` API | `mods/examples/skip-to-favorite/` |
+| **Custom App** | Full-page views that appear as new sidebar tabs | `mods/examples/stats-app/` |
+
+Extensions run in a **hardened sandbox** — hidden `<iframe>` with unique origin, no access to Tauri IPC, `localStorage`, or arbitrary network hosts. Full threat model in [`SECURITY.md`](./SECURITY.md).
+
+See [`docs/MODDING.md`](./docs/MODDING.md) for the authoring guide and API reference.
 
 See [`plan.md`](./plan.md) for the full roadmap.
 

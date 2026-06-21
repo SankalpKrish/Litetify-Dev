@@ -5,6 +5,7 @@ import { useModsStore } from '../mods';
 interface SidebarProps {
   currentView: string;
   currentPlaylistId?: string;
+  currentModId?: string;
   onNavigate: (view: string, params?: Record<string, string>) => void;
 }
 
@@ -43,7 +44,7 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
   }
 });
 
-export function Sidebar({ currentView, currentPlaylistId, onNavigate }: SidebarProps) {
+export function Sidebar({ currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
   const { data: playlists } = usePlaylists(50);
   const customViews = useModsStore((s) => s.customViews);
 
@@ -85,7 +86,7 @@ export function Sidebar({ currentView, currentPlaylistId, onNavigate }: SidebarP
             {sidebarItems.map((item) => (
               <button
                 key={item.id}
-                className={`sidebar-playlist-item${currentView === `mod:${item.id}` ? ' sidebar-playlist-item-active' : ''}`}
+                className={`sidebar-playlist-item${currentModId === item.id ? ' sidebar-playlist-item-active' : ''}`}
                 onClick={() => onNavigate('mod', { modId: item.id })}
                 aria-label={item.label}
               >

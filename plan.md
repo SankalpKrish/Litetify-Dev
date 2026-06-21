@@ -477,10 +477,10 @@ a valid, auto-refreshing access token stored in the OS keychain.
 
 **Phase 5 Gate:**
 
-- [ ] Themes, extensions, and custom apps all load from `mods/` with no rebuild.
-- [ ] `window.Litetify` API is documented and versioned.
-- [ ] Sandbox blocks token theft, arbitrary IPC, and exfiltration (verified).
-- [ ] Settings UI manages all three mod types.
+- [x] Themes, extensions, and custom apps all load from `mods/` with no rebuild.
+- [x] `window.Litetify` API is documented and versioned.
+- [x] Sandbox blocks token theft, arbitrary IPC, and exfiltration (verified).
+- [x] Settings UI manages all three mod types.
 
 ---
 

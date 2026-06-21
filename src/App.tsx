@@ -120,6 +120,7 @@ function AppShell(): React.JSX.Element {
 
   const currentViewName = currentView.name;
   const currentPlaylistId = currentView.name === 'playlist' ? currentView.id : undefined;
+  const currentModId = currentView.name === 'mod' ? currentView.modId : undefined;
 
   return (
     <>
@@ -131,6 +132,7 @@ function AppShell(): React.JSX.Element {
       <Sidebar
         currentView={currentViewName}
         currentPlaylistId={currentPlaylistId}
+        currentModId={currentModId}
         onNavigate={handleNavigate}
       />
       <div className="app-main">

@@ -1,0 +1,9 @@
+{
+  "name": "Stats",
+  "version": "1.0.0",
+  "type": "app",
+  "entry": "app.js",
+  "description": "Shows your top artists and tracks from Spotify.",
+  "author": "Litetify",
+  "litetifyApiVersion": "1.0.0"
+}
