@@ -13,9 +13,16 @@ extensions, and custom apps.
 
 ## Status
 
-**Phase 0 — scaffolding.** A runnable Tauri + React shell with an IPC smoke
-test. Auth, playback, library, and the mod system land in later phases. See
-[`plan.md`](./plan.md) for the full roadmap.
+**Phases 1-4 complete, Phase 5 in progress.** A functional desktop Spotify client with:
+
+- **Spotify OAuth** via PKCE — login, token refresh, OS keychain storage
+- **Playback** via Spotify Web Playback SDK — play/pause/seek/volume/next/prev with full transport controls
+- **Library browsing** — playlists, liked songs, albums, artists, search
+- **Home/Browse** — featured, new releases, recommendations
+- **Design system** — CSS custom property tokens, dark theme, Inter type scale, responsive layout
+- **Mod system** — manifest validation, theme engine, extension sandbox, custom apps (settings UI, theme injection, mod store)
+
+See [`plan.md`](./plan.md) for the full roadmap.
 
 ## Prerequisites
 
@@ -52,7 +59,7 @@ Spotify **Client ID**:
    `http://127.0.0.1:14523/callback`
    - Spotify removed `localhost` and `http`-hostname redirect URIs on
      **2025-11-27**; a **loopback IP literal** (`127.0.0.1`) is required.
-3. Copy the **Client ID**. From Phase 1 onward you'll enter it in Settings
+3. Copy the **Client ID**. Enter it in the app's login screen on first run
    (or set `VITE_SPOTIFY_CLIENT_ID` in a local `.env` — see `.env.example`).
 
 ## Scripts
