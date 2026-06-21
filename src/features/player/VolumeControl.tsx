@@ -1,6 +1,5 @@
 import { memo, useCallback, useRef, useState } from 'react';
 import { usePlayerStore } from './playerStore';
-import { webSdkEngine } from '../../playback/websdk';
 
 const SpeakerIcon = memo(function SpeakerIcon({ muted }: { muted: boolean }) {
   return (
@@ -21,25 +20,43 @@ const SpeakerIcon = memo(function SpeakerIcon({ muted }: { muted: boolean }) {
 export const VolumeControl = memo(function VolumeControl() {
   const volume = usePlayerStore((s) => s.volume);
   const setState = usePlayerStore((s) => s.setState);
+  const getEngine = usePlayerStore((s) => s.getEngine);
   const barRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
+  const rectRef = useRef<DOMRect | null>(null);
+  const prevVolumeRef = useRef(50);
+
+  const engine = getEngine();
+
+  const handleMute = useCallback(() => {
+    if (!engine) return;
+    if (volume === 0) {
+      setState({ volume: prevVolumeRef.current });
+      engine.setVolume(prevVolumeRef.current);
+    } else {
+      prevVolumeRef.current = volume;
+      setState({ volume: 0 });
+      engine.setVolume(0);
+    }
+  }, [volume, setState, engine]);
 
   const setVol = useCallback(
     async (clientX: number) => {
       const el = barRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
+      if (!el || !engine) return;
+      const rect = rectRef.current ?? el.getBoundingClientRect();
       const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
       const vol = Math.round((x / rect.width) * 100);
       setState({ volume: vol });
-      await webSdkEngine.setVolume(vol);
+      await engine.setVolume(vol);
     },
-    [setState],
+    [setState, engine],
   );
 
   const onDown = useCallback(
     (e: React.PointerEvent) => {
       setDragging(true);
+      rectRef.current = barRef.current?.getBoundingClientRect() ?? null;
       setVol(e.clientX);
     },
     [setVol],
@@ -63,7 +80,7 @@ export const VolumeControl = memo(function VolumeControl() {
 
   return (
     <div className="volume-control">
-      <button className="ctrl-btn ctrl-icon-btn" aria-label={volume === 0 ? 'Unmute' : 'Mute'} title={volume === 0 ? 'Unmute' : 'Mute'}>
+      <button className="ctrl-btn ctrl-icon-btn" onClick={handleMute} aria-label={volume === 0 ? 'Unmute' : 'Mute'} title={volume === 0 ? 'Unmute' : 'Mute'}>
         <SpeakerIcon muted={volume === 0} />
       </button>
       <div
@@ -80,6 +97,7 @@ export const VolumeControl = memo(function VolumeControl() {
         aria-valuenow={volume}
         tabIndex={0}
         onKeyDown={(e) => {
+          if (!engine) return;
           let newVol = volume;
           if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
             e.preventDefault();
@@ -97,10 +115,10 @@ export const VolumeControl = memo(function VolumeControl() {
             return;
           }
           setState({ volume: newVol });
-          webSdkEngine.setVolume(newVol);
+          engine.setVolume(newVol);
         }}
       >
-        <div className="volume-fill" style={{ width: `${volume}%` }} />
+        <div className="volume-fill" style={{ transform: `scaleX(${volume / 100})` }} />
       </div>
     </div>
   );

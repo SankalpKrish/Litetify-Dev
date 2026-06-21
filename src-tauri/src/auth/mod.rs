@@ -22,7 +22,7 @@ const SCOPES: &str = "streaming \
 
 pub fn build_auth_url(client_id: &str, challenge: &str, state: &str, port: u16) -> String {
     let redirect_uri = format!("http://127.0.0.1:{port}/callback");
-    let mut url = Url::parse("https://accounts.spotify.com/authorize").unwrap();
+    let mut url = Url::parse("https://accounts.spotify.com/authorize").expect("invalid static auth URL");
     url.query_pairs_mut()
         .append_pair("client_id", client_id)
         .append_pair("response_type", "code")
@@ -83,7 +83,7 @@ pub async fn exchange_code(
 
     if !resp.status().is_success() {
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
+        let body = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         return Err(format!("token exchange failed ({status}): {body}"));
     }
 
@@ -103,7 +103,7 @@ pub async fn fetch_profile(access_token: &str) -> Result<serde_json::Value, Stri
 
     if !resp.status().is_success() {
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
+        let body = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         return Err(format!("profile fetch failed ({status}): {body}"));
     }
 

@@ -1,31 +1,53 @@
 import { useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ensurePlayer, webSdkEngine } from '../../playback/websdk';
-import { usePlayerStore } from './playerStore';
+import { librespotEngine } from '../../playback/librespot';
+import { usePlayerStore, getStoredEngineType } from './playerStore';
+import { getStoredClientId } from '../auth/authStore';
 import { setPlaybackEngine, setStateChangeCallbacks } from '../../mods/api';
 import { emitEvent } from '../../mods/api';
+import { useMediaSession } from './useMediaSession';
 
 export function PlayerInitializer() {
   const initialized = useRef(false);
+  const abortRef = useRef(false);
   const setState = usePlayerStore((s) => s.setState);
   const setEngine = usePlayerStore((s) => s.setEngine);
+
+  useMediaSession();
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    setEngine(webSdkEngine);
-    setPlaybackEngine(webSdkEngine);
+    const engineType = getStoredEngineType();
+    const engine = engineType === 'librespot' ? librespotEngine : webSdkEngine;
+    const clientId = getStoredClientId();
+
+    setEngine(engine);
+    setPlaybackEngine(engine);
 
     setStateChangeCallbacks([
       (state) => emitEvent('playback:stateChange', state),
     ]);
 
-    invoke<string>('get_valid_token', { clientId: '' })
-      .then((token) => ensurePlayer(token))
+    if (engineType === 'librespot') {
+      void invoke('init_librespot', { clientId })
+        .then(() => console.log('[librespot] engine initialized'))
+        .catch((err) => console.error('[librespot] init failed:', err));
+      return;
+    }
+
+    invoke<string>('get_valid_token', { clientId })
+      .then((token) => {
+        if (abortRef.current) return;
+        return ensurePlayer(token);
+      })
       .then(() => {
-        void invoke('api_get_currently_playing', { clientId: '' })
+        if (abortRef.current) return;
+        void invoke('api_get_currently_playing', { clientId })
           .then((data) => {
+            if (abortRef.current) return;
             const cp = data as {
               item?: { name?: string; uri?: string; duration_ms?: number; artists?: { name: string }[]; album?: { images?: { url: string }[]; name?: string } } | null;
               is_playing?: boolean;
@@ -44,9 +66,10 @@ export function PlayerInitializer() {
               });
             }
           })
-          .catch(() => {});
+          .catch((err) => console.error('[currently_playing] fetch failed:', err));
       })
       .catch((err) => console.error('Player init failed:', err));
+    return () => { abortRef.current = true; };
   }, [setState, setEngine]);
 
   return null;

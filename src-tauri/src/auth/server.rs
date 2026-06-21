@@ -1,5 +1,6 @@
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 use tiny_http::{Response, Server};
 
 pub struct CallbackResult {
@@ -11,35 +12,53 @@ const HTML_SUCCESS: &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Litetify — Auth</title>
+  <title>Litetify — Authentication complete</title>
   <style>
-    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d0d0f;color:#f5f5f7}
-    .card{text-align:center;padding:2rem}
-    .check{font-size:3rem;color:#1db954;margin-bottom:0.5rem}
-    p{margin:0;font-size:1.1rem}
-    .sub{color:#9b9ba3;font-size:0.85rem;margin-top:0.5rem}
+    *,*::before,*::after{box-sizing:border-box}
+    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+    .card{text-align:center;padding:3rem 2rem;max-width:380px;width:100%}
+    .icon-wrap{width:64px;height:64px;border-radius:50%;background:rgba(29,185,84,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+    .check{font-size:1.75rem;color:#1db954;line-height:1}
+    .logo{width:32px;height:32px;background:#1db954;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-weight:700;font-size:14px;color:#000}
+    h1{margin:0 0 0.5rem;font-size:1.25rem;font-weight:600;letter-spacing:-0.02em}
+    p{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
+    .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.06);border-top-color:#1db954;border-radius:50%;animation:spin 0.8s linear infinite;margin:1.5rem auto 0}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="check">&#10003;</div>
-    <p>Authentication complete!</p>
-    <p class="sub">You can close this tab and return to Litetify.</p>
+    <div class="logo">L</div>
+    <div class="icon-wrap"><span class="check">&#10003;</span></div>
+    <h1>Authentication complete</h1>
+    <p>You can close this tab and return to Litetify.</p>
+    <div class="spinner"></div>
   </div>
 </body>
 </html>"#;
 
 const HTML_ERROR: &str = r#"<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Litetify — Auth Error</title>
-<style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:sans-serif;background:#0d0d0f;color:#f5f5f7}
-.card{text-align:center;padding:2rem}
-.error{font-size:2rem;color:#e74c3c;margin-bottom:0.5rem}
-p{margin:0}</style></head>
+<head>
+  <meta charset="utf-8">
+  <title>Litetify — Authentication failed</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+    .card{text-align:center;padding:3rem 2rem;max-width:380px;width:100%}
+    .logo{width:32px;height:32px;background:#1db954;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-weight:700;font-size:14px;color:#000}
+    .icon-wrap{width:64px;height:64px;border-radius:50%;background:rgba(231,76,60,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+    .error-x{font-size:1.5rem;color:#e74c3c;line-height:1}
+    h1{margin:0 0 0.5rem;font-size:1.25rem;font-weight:600;letter-spacing:-0.02em}
+    p{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
+  </style>
+</head>
 <body>
   <div class="card">
-    <div class="error">&#10007;</div>
-    <p>Authentication failed.</p>
+    <div class="logo">L</div>
+    <div class="icon-wrap"><span class="error-x">&#10007;</span></div>
+    <h1>Authentication failed</h1>
+    <p>Please try logging in again.</p>
   </div>
 </body>
 </html>"#;
@@ -107,8 +126,7 @@ impl CallbackServer {
             Err(_) => return Err(400),
         };
 
-        if let Some(err) = parsed.query_pairs().find(|(k, _)| k == "error") {
-            let _ = err;
+        if parsed.query_pairs().find(|(k, _)| k == "error").is_some() {
             return Err(400);
         }
 
@@ -139,7 +157,15 @@ impl CallbackServer {
 impl Drop for CallbackServer {
     fn drop(&mut self) {
         if let Some(handle) = self.handle.take() {
-            let _ = handle.join();
+            let timeout = Duration::from_secs(5);
+            let start = std::time::Instant::now();
+            while start.elapsed() < timeout {
+                if handle.is_finished() {
+                    let _ = handle.join();
+                    return;
+                }
+                std::thread::sleep(Duration::from_millis(100));
+            }
         }
     }
 }

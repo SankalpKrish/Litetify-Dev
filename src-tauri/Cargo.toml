@@ -15,10 +15,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+vergen = { version = "=9.0.6", default-features = false, optional = true }
 
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+tauri-plugin-updater = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
@@ -29,12 +31,13 @@ keyring = "2"
 rand = "0.8"
 url = "2"
 chrono = { version = "0.4", features = ["serde"] }
-tokio = { version = "1", features = ["sync", "rt"] }
+tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread"] }
+librespot = { version = "0.7", default-features = false, features = ["rodio-backend", "rustls-tls-webpki-roots"], optional = true }
 
 [features]
 # librespot native-audio engine is OPT-IN and OFF by default (see plan Phase 6).
 default = []
-librespot = []
+librespot = ["dep:librespot", "dep:vergen"]
 
 [profile.release]
 panic = "abort"

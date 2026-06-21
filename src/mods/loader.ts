@@ -114,7 +114,7 @@ export async function initMods(): Promise<void> {
   await loadEnabledMods();
 }
 
-export function persistEnabledState(_path: string, _enabled: boolean): void {
+export function persistEnabledState(): void {
   const store = useModsStore.getState();
   const enabledPaths = store.registry.filter((m) => m.enabled).map((m) => m.path);
   persistEnabled(enabledPaths);

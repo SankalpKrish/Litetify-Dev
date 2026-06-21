@@ -122,6 +122,18 @@ a {
   letter-spacing: -0.02em;
 }
 
+.dev-badge {
+  font-size: 10px;
+  font-weight: var(--lt-font-weight-bold);
+  letter-spacing: 0.08em;
+  color: var(--lt-accent);
+  background: color-mix(in srgb, var(--lt-accent) 15%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  line-height: 1.4;
+  margin-left: auto;
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -609,7 +621,6 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: transform;
   transition: transform var(--lt-transition-fast), background var(--lt-transition-fast);
   flex-shrink: 0;
 }
@@ -842,6 +853,22 @@ a {
   justify-content: center;
 }
 
+.auth-dev-section {
+  margin-top: var(--lt-space-lg);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lt-space-sm);
+}
+
+.auth-divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--lt-border);
+  opacity: 0.3;
+}
+
 /* ─── Spinner ───────────────────────────────────────────── */
 
 .auth-spinner {
@@ -902,6 +929,7 @@ a {
   align-items: center;
   padding: 0 var(--lt-space-lg);
   backdrop-filter: blur(6px);
+  will-change: opacity;
   z-index: var(--lt-z-player);
 }
 
@@ -948,6 +976,19 @@ a {
   object-fit: cover;
   flex-shrink: 0;
   background: var(--lt-bg-hover);
+}
+
+.np-art-fallback {
+  background: var(--lt-bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.np-art-fallback::after {
+  content: '~';
+  font-size: 1.5rem;
+  color: var(--lt-fg-tertiary);
 }
 
 .np-text {
@@ -1069,6 +1110,7 @@ a {
   height: 100%;
   background: var(--lt-fg-primary);
   border-radius: var(--lt-radius-sm);
+  transform-origin: left;
   transition: transform 0.1s linear;
 }
 
@@ -1119,6 +1161,7 @@ a {
   height: 100%;
   background: var(--lt-fg-primary);
   border-radius: var(--lt-radius-sm);
+  transform-origin: left;
   transition: transform 0.1s;
 }
 
@@ -1509,7 +1552,6 @@ a {
   font-weight: var(--lt-font-weight-medium);
   box-shadow: var(--lt-shadow-md);
   opacity: 0;
-  will-change: opacity;
   transition: opacity var(--lt-transition-normal), transform var(--lt-transition-normal);
   z-index: var(--lt-z-dropdown);
   pointer-events: none;
@@ -1553,6 +1595,70 @@ a {
 
 .toast-close:hover {
   opacity: 1;
+}
+
+/* ─── Engine warning dialog ──────────────────────────────── */
+
+.engine-warning-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--lt-z-modal, 1000);
+}
+
+.engine-warning-dialog {
+  background: var(--lt-bg-elevated);
+  border: 1px solid var(--lt-border);
+  border-radius: var(--lt-radius-lg);
+  padding: var(--lt-space-xl);
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--lt-shadow-lg);
+}
+
+.engine-warning-dialog h3 {
+  margin: 0 0 var(--lt-space-md);
+  font-size: var(--lt-font-size-lg);
+  font-weight: var(--lt-font-weight-bold);
+  color: var(--lt-error);
+}
+
+.engine-warning-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lt-space-md);
+  font-size: var(--lt-font-size-sm);
+  color: var(--lt-fg-primary);
+  line-height: 1.5;
+}
+
+.engine-warning-body p {
+  margin: 0;
+}
+
+.engine-warning-body ul {
+  margin: 0;
+  padding-left: var(--lt-space-lg);
+}
+
+.engine-warning-body li {
+  margin-bottom: var(--lt-space-xs);
+}
+
+.engine-warning-disclaimer {
+  font-size: var(--lt-font-size-xs);
+  color: var(--lt-fg-tertiary);
+  font-style: italic;
+}
+
+.engine-warning-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--lt-space-md);
+  margin-top: var(--lt-space-xl);
 }
 
 /* ─── Mod view (custom apps) ─────────────────────────────── */
@@ -1657,15 +1763,7 @@ input:focus:not(:focus-visible) {
     transform: translateX(-100%);
     transition: transform var(--lt-transition-normal);
   }
-  .sidebar-open {
-    transform: translateX(0);
-  }
-  .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: calc(var(--lt-z-sidebar) - 1);
-  }
+
   .player-bar {
     left: 0;
   }

@@ -7,9 +7,10 @@ interface InvokeMessage {
   type: 'invoke';
   method: string;
   args: unknown[];
+  _token?: string;
 }
 
-type SandboxRequest = InvokeMessage | { type: 'console'; method: string; args: string[]; modId: string };
+type SandboxRequest = InvokeMessage | { type: 'console'; method: string; args: string[]; modId: string; _token?: string };
 
 interface ResultMessage {
   type: 'result';
@@ -29,13 +30,19 @@ const API_VERSION = '1.0.0';
 
 let apiInstance: LitetifyAPI | null = null;
 
-function buildDispatcher(api: LitetifyAPI): Record<string, (...args: unknown[]) => unknown> {
+function buildDispatcher(api: LitetifyAPI, permissions: string[]): Record<string, (...args: unknown[]) => unknown> {
   const dispatch: Record<string, (...args: unknown[]) => unknown> = {};
+  function matches(path: string): boolean {
+    if (permissions.length === 0) return false;
+    return permissions.some(p => p === path || path.startsWith(p + '.') || (p.endsWith(':*') && path.startsWith(p.slice(0, -2))));
+  }
   function walk(obj: Record<string, unknown>, prefix: string): void {
     for (const [key, value] of Object.entries(obj)) {
       const path = prefix ? `${prefix}.${key}` : key;
       if (typeof value === 'function') {
-        dispatch[path] = value as (...args: unknown[]) => unknown;
+        if (matches(path)) {
+          dispatch[path] = value as (...args: unknown[]) => unknown;
+        }
       } else if (typeof value === 'object' && value !== null) {
         walk(value as Record<string, unknown>, path);
       }
@@ -47,6 +54,7 @@ function buildDispatcher(api: LitetifyAPI): Record<string, (...args: unknown[]) 
 
 const loadedIframes = new Map<string, HTMLIFrameElement>();
 const extensionMessageHandlers = new Map<string, (event: MessageEvent) => void>();
+const extensionTokens = new Map<string, string>();
 
 function escapeForScript(code: string): string {
   return code
@@ -56,7 +64,7 @@ function escapeForScript(code: string): string {
     .replace(/<\/script>/gi, '<\\/script>');
 }
 
-function buildSandboxHtml(code: string, modId: string): string {
+function buildSandboxHtml(code: string, modId: string, token: string): string {
   const safeCode = escapeForScript(code);
   return `<!DOCTYPE html>
 <html>
@@ -70,6 +78,8 @@ var _pending = {};
 var _modResult = (function () {
 ${safeCode}
 })();
+
+var _token = "${token}";
 
 window.addEventListener("message", function (event) {
   var msg = event.data;
@@ -117,22 +127,22 @@ function sendInvoke(method, args) {
   var id = String(++_reqId);
   return new Promise(function (resolve, reject) {
     _pending[id] = { resolve: resolve, reject: reject };
-    parent.postMessage({ type: "invoke", id: id, method: method, args: args }, "*");
+    parent.postMessage({ type: "invoke", id: id, method: method, args: args, _token: _token }, "*");
   });
 }
 
 var console = {
   log: function () {
-    parent.postMessage({ type: "console", method: "log", modId: "${modId}", args: Array.prototype.map.call(arguments, String) }, "*");
+    parent.postMessage({ type: "console", method: "log", modId: "${modId}", args: Array.prototype.map.call(arguments, String), _token: _token }, "*");
   },
   warn: function () {
-    parent.postMessage({ type: "console", method: "warn", modId: "${modId}", args: Array.prototype.map.call(arguments, String) }, "*");
+    parent.postMessage({ type: "console", method: "warn", modId: "${modId}", args: Array.prototype.map.call(arguments, String), _token: _token }, "*");
   },
   error: function () {
-    parent.postMessage({ type: "console", method: "error", modId: "${modId}", args: Array.prototype.map.call(arguments, String) }, "*");
+    parent.postMessage({ type: "console", method: "error", modId: "${modId}", args: Array.prototype.map.call(arguments, String), _token: _token }, "*");
   },
   info: function () {
-    parent.postMessage({ type: "console", method: "info", modId: "${modId}", args: Array.prototype.map.call(arguments, String) }, "*");
+    parent.postMessage({ type: "console", method: "info", modId: "${modId}", args: Array.prototype.map.call(arguments, String), _token: _token }, "*");
   },
 };
 <\\/script>
@@ -145,11 +155,12 @@ export async function loadExtension(mod: ModEntry): Promise<void> {
 
   const code = await readModFile(mod.path, mod.manifest.entry);
   const modId = mod.manifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 
   if (!apiInstance) {
     apiInstance = createLitetifyAPI(modId);
   }
-  const dispatcher = buildDispatcher(apiInstance);
+  const dispatcher = buildDispatcher(apiInstance, mod.manifest.permissions || []);
 
   const iframe = document.createElement('iframe');
   iframe.setAttribute('sandbox', 'allow-scripts');
@@ -157,11 +168,14 @@ export async function loadExtension(mod: ModEntry): Promise<void> {
   iframe.title = `mod:${modId}`;
 
   const messageHandler = (event: MessageEvent<SandboxRequest | SandboxResponse>): void => {
+    if (event.origin !== 'null') return;
+
     const msg = event.data;
     if (!msg || typeof msg !== 'object') return;
 
     if ('method' in msg && msg.type === 'invoke') {
       const invoke = msg as InvokeMessage;
+      if (invoke._token !== token) return;
       const fn = dispatcher[invoke.method];
       if (!fn) {
         iframe.contentWindow?.postMessage({ type: 'error', id: invoke.id, error: `Unknown method: ${invoke.method}` }, '*');
@@ -183,6 +197,7 @@ export async function loadExtension(mod: ModEntry): Promise<void> {
 
     if (msg.type === 'console') {
       const c = msg;
+      if (c._token !== token) return;
       const fn = (console as unknown as Record<string, (...args: string[]) => void>)[c.method];
       if (fn) fn(`[mod:${c.modId}]`, ...c.args);
       return;
@@ -191,8 +206,9 @@ export async function loadExtension(mod: ModEntry): Promise<void> {
 
   window.addEventListener('message', messageHandler);
   extensionMessageHandlers.set(modId, messageHandler);
+  extensionTokens.set(modId, token);
 
-  const html = buildSandboxHtml(code, modId);
+  const html = buildSandboxHtml(code, modId, token);
 
   return new Promise<void>((resolve) => {
     iframe.onload = () => resolve();
@@ -213,6 +229,7 @@ export function unloadExtension(modId: string): void {
     window.removeEventListener('message', handler);
     extensionMessageHandlers.delete(modId);
   }
+  extensionTokens.delete(modId);
 
   iframe.remove();
   loadedIframes.delete(modId);

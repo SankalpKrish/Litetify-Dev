@@ -3,12 +3,37 @@ import { createLitetifyAPI } from './api';
 import { useModsStore } from './store';
 import { MountContainer, HtmlContainer } from './components';
 
-export async function loadCustomApp(mod: { manifest: { type: string; name: string; entry: string }; path: string }): Promise<void> {
+function filterApiByPermissions(api: Record<string, unknown>, permissions: string[]): Record<string, unknown> {
+  if (!permissions || permissions.length === 0) return {};
+  function matches(path: string): boolean {
+    return permissions.some(p => p === path || path.startsWith(p + '.') || (p.endsWith(':*') && path.startsWith(p.slice(0, -2))));
+  }
+  function walk(obj: Record<string, unknown>, prefix: string): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      if (typeof value === 'function') {
+        if (matches(path)) {
+          result[key] = value;
+        }
+      } else if (typeof value === 'object' && value !== null) {
+        const nested = walk(value as Record<string, unknown>, path);
+        if (Object.keys(nested).length > 0) {
+          result[key] = nested;
+        }
+      }
+    }
+    return result;
+  }
+  return walk(api, '');
+}
+
+export async function loadCustomApp(mod: { manifest: { type: string; name: string; entry: string; permissions?: string[] }; path: string }): Promise<void> {
   if (mod.manifest.type !== 'app') return;
 
   const code = await readModFile(mod.path, mod.manifest.entry);
   const modId = mod.manifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-  const api = createLitetifyAPI(modId);
+  const api = filterApiByPermissions(createLitetifyAPI(modId) as unknown as Record<string, unknown>, mod.manifest.permissions || []);
 
   const globals: Record<string, unknown> = {
     console: {

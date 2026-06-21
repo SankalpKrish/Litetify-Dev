@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearch } from '../../lib/queries/useSearch';
 import { getImage, formatDuration } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
-import type { SpotifyTrack, SpotifyArtist, SpotifyAlbum, SpotifyPlaylist, SearchType } from '../../lib/types';
+import type { SearchType } from '../../lib/types';
 
 type TabType = 'all' | 'track' | 'artist' | 'album' | 'playlist';
 
@@ -115,12 +115,11 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.tracks.items.slice(0, 10).map((track: SpotifyTrack, idx: number) => (
+                  {data.tracks.items.slice(0, 10).map((track, idx) => (
                     <tr
-                      key={track.id ?? idx}
+                      key={track.id ?? `local-${idx}-${track.uri}`}
                       className="track-row"
                       onClick={() => playTrack(track.uri)}
-                      onDoubleClick={() => playTrack(track.uri)}
                       tabIndex={0}
                       onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
                     >
@@ -158,7 +157,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                             className="track-album"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onNavigate('album', { id: track.album!.id });
+                              onNavigate('album', { id: track.album.id });
                             }}
                           >
                             {track.album.name}
@@ -179,7 +178,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                 <h2 className="section-title">Artists</h2>
               </div>
               <div className="card-grid">
-                {data.artists.items.slice(0, 10).map((artist: SpotifyArtist) => (
+                {data.artists.items.slice(0, 10).map((artist) => (
                   <div
                     key={artist.id}
                     className="card"
@@ -210,7 +209,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                 <h2 className="section-title">Albums</h2>
               </div>
               <div className="card-grid">
-                {data.albums.items.slice(0, 10).map((album: SpotifyAlbum) => (
+                {data.albums.items.slice(0, 10).map((album) => (
                   <div
                     key={album.id}
                     className="card"
@@ -243,7 +242,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                 <h2 className="section-title">Playlists</h2>
               </div>
               <div className="card-grid">
-                {data.playlists.items.slice(0, 10).map((pl: SpotifyPlaylist) => (
+                {data.playlists.items.slice(0, 10).map((pl) => (
                   <div
                     key={pl.id}
                     className="card"

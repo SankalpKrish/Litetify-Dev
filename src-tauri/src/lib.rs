@@ -62,6 +62,24 @@ pub fn run() {
             playback::websdk::engine_set_volume,
             playback::websdk::engine_next,
             playback::websdk::engine_previous,
+            #[cfg(feature = "librespot")]
+            playback::librespot::init_librespot,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_play,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_pause,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_resume,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_seek,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_set_volume,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_next,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_previous,
+            #[cfg(feature = "librespot")]
+            playback::librespot::librespot_toggle_shuffle,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Litetify");

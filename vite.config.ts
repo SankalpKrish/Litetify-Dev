@@ -36,5 +36,23 @@ export default defineConfig({
     target: 'es2021',
     minify: 'esbuild',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          query: ['@tanstack/react-query'],
+          player: [
+            './src/features/player/NowPlayingBar.tsx',
+            './src/features/player/TransportControls.tsx',
+            './src/features/player/ProgressBar.tsx',
+            './src/features/player/VolumeControl.tsx',
+            './src/features/player/NowPlayingInfo.tsx',
+          ],
+          auth: ['./src/features/auth/LoginScreen.tsx'],
+          settings: ['./src/features/settings/SettingsView.tsx', './src/features/settings/Mods.tsx'],
+          mods: ['./src/mods/loader.ts', './src/mods/sandbox.ts', './src/mods/api.ts'],
+        },
+      },
+    },
   },
 });

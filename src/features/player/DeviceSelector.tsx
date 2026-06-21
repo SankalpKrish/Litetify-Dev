@@ -17,7 +17,7 @@ export function DeviceSelector() {
   const refresh = useCallback(() => {
     apiGetAvailableDevices()
       .then(setDevices)
-      .catch(() => {});
+      .catch((err) => console.warn('Failed to fetch devices:', err));
   }, []);
 
   useEffect(() => {
@@ -38,8 +38,8 @@ export function DeviceSelector() {
     try {
       await apiTransferPlayback([deviceId], true);
       setOpen(false);
-    } catch {
-      // transfer failed silently
+    } catch (err) {
+      console.warn('Device transfer failed:', err);
     }
   }, []);
 

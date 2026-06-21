@@ -1,6 +1,5 @@
 import { memo, useCallback } from 'react';
 import { usePlayerStore } from './playerStore';
-import { webSdkEngine } from '../../playback/websdk';
 import type { RepeatMode } from '../../playback/engine';
 
 function RepeatIcon(_: { mode: RepeatMode }) {
@@ -59,24 +58,37 @@ function PauseIcon() {
   );
 }
 
+function useEngine() {
+  return usePlayerStore((s) => s.getEngine)();
+}
+
 export const TransportControls = memo(function TransportControls() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const shuffle = usePlayerStore((s) => s.shuffle);
   const repeat = usePlayerStore((s) => s.repeat);
+  const engine = useEngine();
 
   const togglePlay = useCallback(() => {
+    if (!engine) return;
     if (isPlaying) {
-      webSdkEngine.pause().catch(() => {});
+      engine.pause().catch(() => {});
     } else {
-      webSdkEngine.resume().catch(() => {});
+      engine.resume().catch(() => {});
     }
-  }, [isPlaying]);
+  }, [isPlaying, engine]);
+
+  const act = useCallback(
+    (fn: () => Promise<void>) => {
+      if (engine) fn().catch(() => {});
+    },
+    [engine],
+  );
 
   return (
     <div className="transport-controls">
       <button
         className={`ctrl-btn ${shuffle ? 'ctrl-active' : ''}`}
-        onClick={() => webSdkEngine.toggleShuffle()}
+        onClick={() => act(() => engine!.toggleShuffle())}
         title="Shuffle"
         aria-label="Toggle shuffle"
       >
@@ -84,7 +96,7 @@ export const TransportControls = memo(function TransportControls() {
       </button>
       <button
         className="ctrl-btn"
-        onClick={() => webSdkEngine.previousTrack()}
+        onClick={() => act(() => engine!.previousTrack())}
         title="Previous"
         aria-label="Previous track"
       >
@@ -95,7 +107,7 @@ export const TransportControls = memo(function TransportControls() {
       </button>
       <button
         className="ctrl-btn"
-        onClick={() => webSdkEngine.nextTrack()}
+        onClick={() => act(() => engine!.nextTrack())}
         title="Next"
         aria-label="Next track"
       >
@@ -103,7 +115,7 @@ export const TransportControls = memo(function TransportControls() {
       </button>
       <button
         className={`ctrl-btn ${repeat !== 'off' ? 'ctrl-active' : ''}`}
-        onClick={() => webSdkEngine.cycleRepeat()}
+        onClick={() => act(() => engine!.cycleRepeat())}
         title={`Repeat: ${repeat}`}
         aria-label="Cycle repeat mode"
       >

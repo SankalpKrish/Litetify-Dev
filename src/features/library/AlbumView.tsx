@@ -88,10 +88,9 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
         <tbody>
           {album.tracks.items.map((track, idx) => (
             <tr
-              key={track.id ?? idx}
+              key={track.id ?? `local-${idx}-${track.uri}`}
               className="track-row"
               onClick={() => playTrack(track.uri)}
-              onDoubleClick={() => playTrack(track.uri)}
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
             >

@@ -4,7 +4,7 @@ import type { SearchType } from '../types';
 
 export const searchKeys = {
   results: (query: string, types: SearchType[]) =>
-    ['search', query, types.sort().join(',')] as const,
+    ['search', query, [...types].sort().join(',')] as const,
 };
 
 export function useSearch(

@@ -20,7 +20,7 @@ export function useArtist(id: string) {
 
 export function useArtistTopTracks(id: string, market?: string) {
   return useQuery({
-    queryKey: artistKeys.topTracks(id),
+    queryKey: [...artistKeys.topTracks(id), market],
     queryFn: () => apiGetArtistTopTracks(id, market),
     staleTime: 5 * 60 * 1000,
     retry: 2,

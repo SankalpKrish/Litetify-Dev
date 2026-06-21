@@ -331,6 +331,7 @@ async fn call_api<T: DeserializeOwned>(
         .map_err(|e| format!("build client: {e}"))?;
 
     let mut retry_count = 0u32;
+    let mut has_retried_401 = false;
 
     loop {
         let token = tokens::get_valid_access_token(client_id).await?;
@@ -369,12 +370,12 @@ async fn call_api<T: DeserializeOwned>(
         }
 
         if status == reqwest::StatusCode::UNAUTHORIZED {
-            if retry_count < 1 {
-                retry_count += 1;
+            if !has_retried_401 {
+                has_retried_401 = true;
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 continue;
             }
-            let body_text = resp.text().await.unwrap_or_default();
+            let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
             return Err(format!("unauthorized after refresh: {body_text}"));
         }
 
@@ -385,7 +386,7 @@ async fn call_api<T: DeserializeOwned>(
                 tokio::time::sleep(Duration::from_secs(wait)).await;
                 continue;
             }
-            let body_text = resp.text().await.unwrap_or_default();
+            let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
             return Err(format!("rate limited: {body_text}"));
         }
 
@@ -396,11 +397,11 @@ async fn call_api<T: DeserializeOwned>(
                 tokio::time::sleep(Duration::from_millis(backoff)).await;
                 continue;
             }
-            let body_text = resp.text().await.unwrap_or_default();
+            let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
             return Err(format!("server error ({}): {body_text}", status.as_u16()));
         }
 
-        let body_text = resp.text().await.unwrap_or_default();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         return Err(format!("{}: {body_text}", status.as_u16()));
     }
 }
@@ -452,7 +453,7 @@ pub async fn api_get_playlist_tracks(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<PlaylistTracks, String> {
-    let path = format!("/playlists/{playlist_id}/tracks");
+    let path = format!("/playlists/{playlist_id}/items");
     let mut params: Vec<(&str, String)> = Vec::new();
     if let Some(l) = limit {
         params.push(("limit", l.to_string()));
@@ -647,7 +648,7 @@ pub async fn api_transfer_playback(
         Ok(())
     } else {
         let status = resp.status();
-        let body_text = resp.text().await.unwrap_or_default();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         Err(format!("transfer failed ({status}): {body_text}"))
     }
 }
@@ -673,9 +674,13 @@ pub async fn api_play(
     let token = tokens::get_valid_access_token(&client_id).await?;
     let headers = build_headers(&token)?;
     let client = reqwest::Client::new();
-    let url = format!("{BASE_URL}/me/player/play?device_id={device_id}");
+    let url = format!("{BASE_URL}/me/player/play");
 
     let mut body = serde_json::json!({});
+    if uri.is_some() && (uris.is_some() || context_uri.is_some()) {
+        // TODO: use structured logging (e.g., log::warn!) when logging crate is added
+        eprintln!("[warn] api_play: multiple playback parameters provided; using uri, ignoring others");
+    }
     if let Some(u) = uri {
         body = serde_json::json!({ "uris": [u] });
     } else if let Some(u) = uris {
@@ -687,6 +692,7 @@ pub async fn api_play(
     let resp = client
         .put(&url)
         .headers(headers)
+        .query(&[("device_id", &device_id)])
         .json(&body)
         .send()
         .await
@@ -696,7 +702,7 @@ pub async fn api_play(
         Ok(())
     } else {
         let status = resp.status();
-        let body_text = resp.text().await.unwrap_or_default();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         Err(format!("play failed ({status}): {body_text}"))
     }
 }
@@ -706,11 +712,12 @@ pub async fn api_pause(client_id: String, device_id: String) -> Result<(), Strin
     let token = tokens::get_valid_access_token(&client_id).await?;
     let headers = build_headers(&token)?;
     let client = reqwest::Client::new();
-    let url = format!("{BASE_URL}/me/player/pause?device_id={device_id}");
+    let url = format!("{BASE_URL}/me/player/pause");
 
     let resp = client
         .put(&url)
         .headers(headers)
+        .query(&[("device_id", &device_id)])
         .send()
         .await
         .map_err(|e| format!("pause request failed: {e}"))?;
@@ -719,7 +726,7 @@ pub async fn api_pause(client_id: String, device_id: String) -> Result<(), Strin
         Ok(())
     } else {
         let status = resp.status();
-        let body_text = resp.text().await.unwrap_or_default();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         Err(format!("pause failed ({status}): {body_text}"))
     }
 }

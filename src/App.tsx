@@ -1,20 +1,23 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { checkAuth } from './features/auth/authStore';
+import { checkAuth, isDevMode } from './features/auth/authStore';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { NowPlayingBar } from './features/player/NowPlayingBar';
 import { PlayerInitializer } from './features/player/PlayerInitializer';
 import { Sidebar } from './app/Sidebar';
-import { HomeView } from './features/browse/HomeView';
-import { SearchView } from './features/search/SearchView';
-import { LibraryView } from './features/library/LibraryView';
-import { PlaylistDetail } from './features/library/PlaylistDetail';
-import { AlbumView } from './features/library/AlbumView';
-import { ArtistView } from './features/library/ArtistView';
-import { SettingsView } from './features/settings/SettingsView';
+import { ErrorBoundary } from './lib/ErrorBoundary';
+import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { initMods, useModsStore } from './mods';
 import { Toast } from './features/settings/Toast';
 import { setToastCallbacks, setSidebarItemCallbacks } from './mods/api';
+
+const HomeView = lazy(() => import('./features/browse/HomeView').then((m) => ({ default: m.HomeView })));
+const SearchView = lazy(() => import('./features/search/SearchView').then((m) => ({ default: m.SearchView })));
+const LibraryView = lazy(() => import('./features/library/LibraryView').then((m) => ({ default: m.LibraryView })));
+const PlaylistDetail = lazy(() => import('./features/library/PlaylistDetail').then((m) => ({ default: m.PlaylistDetail })));
+const AlbumView = lazy(() => import('./features/library/AlbumView').then((m) => ({ default: m.AlbumView })));
+const ArtistView = lazy(() => import('./features/library/ArtistView').then((m) => ({ default: m.ArtistView })));
+const SettingsView = lazy(() => import('./features/settings/SettingsView').then((m) => ({ default: m.SettingsView })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,7 +50,13 @@ function AppShell(): React.JSX.Element {
 
   useEffect(() => {
     checkAuth().then((hasTokens) => {
-      setAuthStatus(hasTokens ? 'authenticated' : 'unauthenticated');
+      if (hasTokens) {
+        setAuthStatus('authenticated');
+      } else if (isDevMode()) {
+        setAuthStatus('authenticated');
+      } else {
+        setAuthStatus('unauthenticated');
+      }
     });
   }, []);
 
@@ -63,8 +72,8 @@ function AppShell(): React.JSX.Element {
       () => setToast(null),
     );
     setSidebarItemCallbacks(
-      (id, label) => {
-        useModsStore.getState().registerCustomView(id, label, () => null);
+      (id, label, icon) => {
+        useModsStore.getState().registerCustomView(id, label, () => null, icon);
       },
       (id) => {
         useModsStore.getState().unregisterCustomView(id);
@@ -73,7 +82,13 @@ function AppShell(): React.JSX.Element {
   }, []);
 
   const handleAuthenticated = useCallback(() => {
-    setAuthStatus('authenticated');
+    checkAuth().then((hasTokens) => {
+      setAuthStatus(hasTokens ? 'authenticated' : 'unauthenticated');
+    });
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    setAuthStatus('unauthenticated');
   }, []);
 
   const handleNavigate = useCallback((view: string, params?: Record<string, string>) => {
@@ -105,6 +120,8 @@ function AppShell(): React.JSX.Element {
     }
   }, []);
 
+  useKeyboardShortcuts();
+
   if (authStatus === 'loading') {
     return (
       <main className="shell">
@@ -118,18 +135,20 @@ function AppShell(): React.JSX.Element {
     return <LoginScreen onAuthenticated={handleAuthenticated} />;
   }
 
+  const devMode = isDevMode();
   const currentViewName = currentView.name;
   const currentPlaylistId = currentView.name === 'playlist' ? currentView.id : undefined;
   const currentModId = currentView.name === 'mod' ? currentView.modId : undefined;
 
   return (
-    <>
+    <ErrorBoundary>
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
       <div className="app-layout">
-      <PlayerInitializer />
+      {!devMode && <PlayerInitializer />}
       <Sidebar
+        devMode={devMode}
         currentView={currentViewName}
         currentPlaylistId={currentPlaylistId}
         currentModId={currentModId}
@@ -137,28 +156,30 @@ function AppShell(): React.JSX.Element {
       />
       <div className="app-main">
         <main className="main-view" id="main-content">
-          {currentView.name === 'home' && <HomeView onNavigate={handleNavigate} />}
-          {currentView.name === 'search' && <SearchView onNavigate={handleNavigate} />}
-          {currentView.name === 'library' && <LibraryView onNavigate={handleNavigate} />}
-          {currentView.name === 'settings' && <SettingsView />}
-          {currentView.name === 'playlist' && (
-            <PlaylistDetail playlistId={currentView.id} onNavigate={handleNavigate} />
-          )}
-          {currentView.name === 'album' && (
-            <AlbumView albumId={currentView.id} onNavigate={handleNavigate} />
-          )}
-          {currentView.name === 'artist' && (
-            <ArtistView artistId={currentView.id} onNavigate={handleNavigate} />
-          )}
-          {currentView.name === 'mod' && (
-            <div className="mod-view">
-              {customViews.has(currentView.modId) ? (
-                customViews.get(currentView.modId)!.render()
-              ) : (
-                <p className="mod-not-found">Custom app not found.</p>
-              )}
-            </div>
-          )}
+          <Suspense fallback={<div className="empty-state"><div className="auth-spinner" /></div>}>
+            {currentView.name === 'home' && <HomeView onNavigate={handleNavigate} />}
+            {currentView.name === 'search' && <SearchView onNavigate={handleNavigate} />}
+            {currentView.name === 'library' && <LibraryView onNavigate={handleNavigate} />}
+            {currentView.name === 'settings' && <SettingsView devMode={devMode} onLogout={handleLogout} />}
+            {currentView.name === 'playlist' && (
+              <PlaylistDetail playlistId={currentView.id} onNavigate={handleNavigate} />
+            )}
+            {currentView.name === 'album' && (
+              <AlbumView albumId={currentView.id} onNavigate={handleNavigate} />
+            )}
+            {currentView.name === 'artist' && (
+              <ArtistView artistId={currentView.id} onNavigate={handleNavigate} />
+            )}
+            {currentView.name === 'mod' && (
+              <div className="mod-view">
+                {customViews.has(currentView.modId) ? (
+                  customViews.get(currentView.modId)!.render()
+                ) : (
+                  <p className="mod-not-found">Custom app not found.</p>
+                )}
+              </div>
+            )}
+          </Suspense>
         </main>
         <NowPlayingBar />
       </div>
@@ -170,7 +191,7 @@ function AppShell(): React.JSX.Element {
         />
       )}
     </div>
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -27,7 +27,7 @@ export function HomeView({ onNavigate }: HomeViewProps) {
   const { data: recommendations, isLoading: recLoading } = useRecommendations(
     undefined,
     undefined,
-    undefined,
+    'pop',
     10,
   );
 

@@ -21,11 +21,6 @@ pub fn code_challenge(verifier: &str) -> String {
 pub fn generate_state() -> String {
     random_base64(32)
 }
-
-pub fn generate_port() -> u16 {
-    49152 + rand::thread_rng().gen_range(0..16384)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

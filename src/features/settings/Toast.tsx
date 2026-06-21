@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ToastProps {
   message: string;
@@ -8,15 +8,22 @@ interface ToastProps {
 
 export function Toast({ message, type, onClose }: ToastProps) {
   const [visible, setVisible] = useState(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
+    const timerRef = { current: undefined as ReturnType<typeof setTimeout> | undefined };
+    const innerRef = { current: undefined as ReturnType<typeof setTimeout> | undefined };
     requestAnimationFrame(() => setVisible(true));
-    const timer = setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setVisible(false);
-      setTimeout(onClose, 200);
+      innerRef.current = setTimeout(() => onCloseRef.current(), 200);
     }, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (innerRef.current) clearTimeout(innerRef.current);
+    };
+  }, []);
 
   return (
     <div className={`toast toast-${type}${visible ? ' toast-visible' : ''}`} role="alert">

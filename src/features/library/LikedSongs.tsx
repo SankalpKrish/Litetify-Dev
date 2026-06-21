@@ -90,10 +90,9 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
             const track = item.track;
             return (
               <tr
-                key={track.id ?? idx}
+                key={track.id ?? `local-${idx}-${track.uri}`}
                 className="track-row"
                 onClick={() => playTrack(track.uri)}
-                onDoubleClick={() => playTrack(track.uri)}
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
               >
@@ -131,7 +130,7 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
                       className="track-album"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onNavigate('album', { id: track.album!.id });
+                        onNavigate('album', { id: track.album.id });
                       }}
                     >
                       {track.album.name}

@@ -13,9 +13,11 @@ export const ProgressBar = memo(function ProgressBar() {
   const durationMs = usePlayerStore((s) => s.durationMs);
   const positionMs = usePlayerStore((s) => s.positionMs);
   const setState = usePlayerStore((s) => s.setState);
+  const getEngine = usePlayerStore((s) => s.getEngine);
   const barRef = useRef<HTMLDivElement>(null);
   const [scrubbing, setScrubbing] = useState(false);
   const [scrubPos, setScrubPos] = useState(0);
+  const rectRef = useRef<DOMRect | null>(null);
 
   const fraction = durationMs > 0 ? positionMs / durationMs : 0;
   const displayFraction = scrubbing ? scrubPos : fraction;
@@ -25,16 +27,15 @@ export const ProgressBar = memo(function ProgressBar() {
     async (clientX: number) => {
       const el = barRef.current;
       if (!el || durationMs <= 0) return;
-      const rect = el.getBoundingClientRect();
+      const rect = rectRef.current ?? el.getBoundingClientRect();
       const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
       const frac = x / rect.width;
       const target = Math.round(frac * durationMs);
       setState({ positionMs: target });
-      await import('../../playback/websdk').then((m) =>
-        m.webSdkEngine.seek(target),
-      );
+      const engine = getEngine();
+      if (engine) await engine.seek(target);
     },
-    [durationMs, setState],
+    [durationMs, setState, getEngine],
   );
 
   const onDown = useCallback(
@@ -43,6 +44,7 @@ export const ProgressBar = memo(function ProgressBar() {
       const el = barRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
+      rectRef.current = rect;
       setScrubPos(
         Math.max(0, Math.min(e.clientX - rect.left, rect.width)) / rect.width,
       );
@@ -55,7 +57,7 @@ export const ProgressBar = memo(function ProgressBar() {
       if (!scrubbing) return;
       const el = barRef.current;
       if (!el) return;
-      const rect = el.getBoundingClientRect();
+      const rect = rectRef.current ?? el.getBoundingClientRect();
       setScrubPos(
         Math.max(0, Math.min(e.clientX - rect.left, rect.width)) / rect.width,
       );
@@ -107,14 +109,15 @@ export const ProgressBar = memo(function ProgressBar() {
             return;
           }
           setState({ positionMs: target });
-          import('../../playback/websdk').then((m) =>
-            m.webSdkEngine.seek(target),
+          const engine = getEngine();
+          if (engine) engine.seek(target).catch((err) =>
+            console.warn('Seek failed:', err)
           );
         }}
       >
         <div
           className="progress-fill"
-          style={{ width: `${displayFraction * 100}%` }}
+          style={{ transform: `scaleX(${displayFraction})` }}
         />
         <div
           className="progress-thumb"

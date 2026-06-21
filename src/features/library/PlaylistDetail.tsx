@@ -10,7 +10,7 @@ interface PlaylistDetailProps {
 
 export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) {
   const { data: playlist, isLoading: plLoading, error: plError } = usePlaylist(playlistId);
-  const { data: tracksData, isLoading: trLoading } = usePlaylistTracks(playlistId);
+  const { data: tracksData, isLoading: trLoading, error: trError } = usePlaylistTracks(playlistId);
   const playTrack = usePlayerStore((s) => s.playTrack);
 
   if (plLoading || trLoading) {
@@ -26,6 +26,15 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
       <div className="empty-state">
         <div className="empty-state-title">Could not load playlist</div>
         <div className="empty-state-desc">It may have been removed or you may not have access.</div>
+      </div>
+    );
+  }
+
+  if (trError) {
+    return (
+      <div className="empty-state">
+        <div className="empty-state-title">Could not load all tracks</div>
+        <div className="empty-state-desc">Some tracks may not be displayed. Try again later.</div>
       </div>
     );
   }
@@ -79,15 +88,13 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
             </tr>
           </thead>
           <tbody>
-            {trackItems.map((item, idx) => {
-              const track = item.track;
-              if (!track) return null;
+            {trackItems.filter((item) => item.track).map((item, idx) => {
+              const track = item.track!;
               return (
                 <tr
-                  key={track.id ?? idx}
+                  key={track.id ?? `local-${idx}-${track.uri}`}
                   className="track-row"
                   onClick={() => playTrack(track.uri)}
-                  onDoubleClick={() => playTrack(track.uri)}
                   tabIndex={0}
                   onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
                 >
@@ -125,7 +132,7 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
                         className="track-album"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onNavigate('album', { id: track.album!.id });
+                          onNavigate('album', { id: track.album.id });
                         }}
                       >
                         {track.album.name}

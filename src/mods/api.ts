@@ -1,5 +1,6 @@
 import type { PlaybackEngine } from '../playback/engine';
 import type { PlaybackState } from '../playback/engine';
+import { apiGetPlaylists, apiGetLikedTracks } from '../lib/api';
 
 export interface LitetifyAPI {
   version: string;
@@ -37,9 +38,10 @@ export interface LitetifyAPI {
 }
 
 let playbackEngine: PlaybackEngine | null = null;
+let playerAPI: LitetifyAPI['player'] | null = null;
 let stateChangeCallbacks: Array<(state: PlaybackState) => void> = [];
-let sidebarItemCallbacks: Array<(id: string, label: string, icon: string) => void> = [];
-let removeSidebarItemCallbacks: Array<(id: string) => void> = [];
+let sidebarItemCallback: ((id: string, label: string, icon: string) => void) | null = null;
+let removeSidebarItemCallback: ((id: string) => void) | null = null;
 let toastCallback: ((message: string, type: 'info' | 'success' | 'error') => void) | null = null;
 let removeToastCallback: (() => void) | null = null;
 const eventListeners = new Map<string, Set<(...args: unknown[]) => void>>();
@@ -58,8 +60,8 @@ export function setSidebarItemCallbacks(
   addCb: (id: string, label: string, icon: string) => void,
   removeCb: (id: string) => void,
 ): void {
-  sidebarItemCallbacks = [addCb];
-  removeSidebarItemCallbacks = [removeCb];
+  sidebarItemCallback = addCb;
+  removeSidebarItemCallback = removeCb;
 }
 
 export function setToastCallbacks(
@@ -129,12 +131,10 @@ function makePlayerAPI(): LitetifyAPI['player'] {
 function makeLibraryAPI(): LitetifyAPI['library'] {
   return {
     async getPlaylists() {
-      const { apiGetPlaylists } = await import('../lib/api');
       const res = await apiGetPlaylists(50);
       return res.items.map((p) => ({ id: p.id, name: p.name }));
     },
     async getLikedTracks() {
-      const { apiGetLikedTracks } = await import('../lib/api');
       const res = await apiGetLikedTracks(50);
       return res.items.map((t) => ({ uri: t.track.uri, name: t.track.name }));
     },
@@ -144,10 +144,10 @@ function makeLibraryAPI(): LitetifyAPI['library'] {
 function makeUIAPI(modId: string): LitetifyAPI['ui'] {
   return {
     addSidebarItem(id, label, icon) {
-      sidebarItemCallbacks.forEach((cb) => cb(`${modId}:${id}`, label, icon));
+      sidebarItemCallback?.(`${modId}:${id}`, label, icon);
     },
     removeSidebarItem(id) {
-      removeSidebarItemCallbacks.forEach((cb) => cb(`${modId}:${id}`));
+      removeSidebarItemCallback?.(`${modId}:${id}`);
     },
     showToast(message, type = 'info') {
       toastCallback?.(message, type);
@@ -215,9 +215,12 @@ function makeEventsAPI(): LitetifyAPI['events'] {
 }
 
 export function createLitetifyAPI(modId: string): LitetifyAPI {
+  if (!playerAPI) {
+    playerAPI = makePlayerAPI();
+  }
   return {
     version: '1.0.0',
-    player: makePlayerAPI(),
+    player: playerAPI,
     library: makeLibraryAPI(),
     ui: makeUIAPI(modId),
     storage: makeStorageAPI(modId),

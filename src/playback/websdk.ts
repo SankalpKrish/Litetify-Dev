@@ -94,6 +94,7 @@ function mapState(sdkState: SpotifyPlayerState): Partial<PlaybackState> {
 let player: SpotifyPlayer | null = null;
 let ready = false;
 let deviceId: string | null = null;
+let unlistenFns: (() => void)[] = [];
 
 export function getDeviceId(): string | null {
   return deviceId;
@@ -117,7 +118,10 @@ async function connectToSDK(token: string): Promise<void> {
     getOAuthToken: (cb) => {
       invoke<string>('get_valid_token', { clientId: '' })
         .then(cb)
-        .catch(() => cb(token));
+        .catch((err) => {
+          console.warn('Token refresh failed, using initial token (may be expired):', err);
+          cb(token);
+        });
     },
     volume: usePlayerStore.getState().volume / 100,
   });
@@ -135,6 +139,8 @@ async function connectToSDK(token: string): Promise<void> {
     if (state) {
       const mapped = mapState(state);
       updateStore(mapped);
+    } else {
+      updateStore({ isPlaying: false, name: null, uri: null, artist: null, album: null, albumImage: null });
     }
   });
 
@@ -175,7 +181,10 @@ export async function ensurePlayer(token: string): Promise<void> {
   if (ready && player) return;
   if (sdkPromise) return sdkPromise;
 
-  sdkPromise = loadSDK().then(() => connectToSDK(token));
+  sdkPromise = loadSDK().then(async () => {
+    await connectToSDK(token);
+    listenForEngineEvents();
+  });
   return sdkPromise;
 }
 
@@ -217,6 +226,9 @@ async function ensureReady(): Promise<SpotifyPlayer> {
 }
 
 function listenForEngineEvents(): void {
+  unlistenFns.forEach((fn) => fn());
+  unlistenFns = [];
+
   listen<string | null>('engine:play', (event) => {
     const uri = event.payload;
     const p = usePlayerStore.getState();
@@ -230,34 +242,32 @@ function listenForEngineEvents(): void {
         play: true,
       });
     }
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen('engine:pause', () => {
     ensureReady().then((p) => p.pause().catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen('engine:resume', () => {
     ensureReady().then((p) => p.resume().catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen<number>('engine:seek', (event) => {
     ensureReady().then((p) => p.seek(event.payload).catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen<number>('engine:set-volume', (event) => {
     ensureReady().then((p) => p.setVolume(event.payload / 100).catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen('engine:next', () => {
     ensureReady().then((p) => p.nextTrack().catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 
   listen('engine:previous', () => {
     ensureReady().then((p) => p.previousTrack().catch(() => {}));
-  });
+  }).then((fn) => unlistenFns.push(fn));
 }
-
-listenForEngineEvents();
 
 export const webSdkEngine: PlaybackEngine = {
   async play(uri?: string) {

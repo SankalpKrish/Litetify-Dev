@@ -16,9 +16,9 @@ export function ModsSettings() {
   const apps = useMemo(() => registry.filter((m) => m.manifest.type === 'app' && !m.error), [registry]);
   const withErrors = useMemo(() => registry.filter((m) => m.error), [registry]);
 
-  const handleToggle = useCallback((path: string, enabled: boolean) => {
+  const handleToggle = useCallback((path: string) => {
     useModsStore.getState().toggleEnabled(path);
-    persistEnabledState(path, enabled);
+    persistEnabledState();
   }, []);
 
   const handleThemeChange = useCallback(
@@ -69,7 +69,7 @@ export function ModsSettings() {
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={(e) => handleToggle(mod.path, e.target.checked)}
+                      onChange={() => handleToggle(mod.path)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />
@@ -103,7 +103,7 @@ export function ModsSettings() {
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={(e) => handleToggle(mod.path, e.target.checked)}
+                      onChange={() => handleToggle(mod.path)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />
@@ -132,7 +132,7 @@ export function ModsSettings() {
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={(e) => handleToggle(mod.path, e.target.checked)}
+                      onChange={() => handleToggle(mod.path)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />

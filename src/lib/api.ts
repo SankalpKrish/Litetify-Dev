@@ -23,34 +23,32 @@ import { getStoredClientId } from '../features/auth/authStore';
 
 function clientId(): string {
   const id = getStoredClientId();
-  if (!id) throw new Error('Client ID not configured');
+  if (!id) return '';
   return id;
 }
 
+async function req<T>(cmd: string, args: Record<string, unknown>): Promise<T> {
+  const id = clientId();
+  if (!id) throw new Error('Client ID not configured');
+  return invoke<T>(cmd, { ...args, clientId: id });
+}
+
 export async function apiGetMe(): Promise<SpotifyUserProfile> {
-  return invoke<SpotifyUserProfile>('api_get_me', { clientId: clientId() });
+  return req<SpotifyUserProfile>('api_get_me', {});
 }
 
 export async function apiGetPlaylists(
   limit?: number,
   offset?: number,
 ): Promise<SpotifyPlaylists> {
-  return invoke<SpotifyPlaylists>('api_get_playlists', {
-    clientId: clientId(),
-    limit,
-    offset,
-  });
+  return req<SpotifyPlaylists>('api_get_playlists', { limit, offset });
 }
 
 export async function apiGetPlaylist(
   playlistId: string,
   fields?: string,
 ): Promise<PlaylistDetail> {
-  return invoke<PlaylistDetail>('api_get_playlist', {
-    clientId: clientId(),
-    playlistId,
-    fields,
-  });
+  return req<PlaylistDetail>('api_get_playlist', { playlistId, fields });
 }
 
 export async function apiGetPlaylistTracks(
@@ -58,48 +56,29 @@ export async function apiGetPlaylistTracks(
   limit?: number,
   offset?: number,
 ): Promise<PlaylistTracks> {
-  return invoke<PlaylistTracks>('api_get_playlist_tracks', {
-    clientId: clientId(),
-    playlistId,
-    limit,
-    offset,
-  });
+  return req<PlaylistTracks>('api_get_playlist_tracks', { playlistId, limit, offset });
 }
 
 export async function apiGetLikedTracks(
   limit?: number,
   offset?: number,
 ): Promise<LikedTracks> {
-  return invoke<LikedTracks>('api_get_liked_tracks', {
-    clientId: clientId(),
-    limit,
-    offset,
-  });
+  return req<LikedTracks>('api_get_liked_tracks', { limit, offset });
 }
 
 export async function apiGetAlbum(albumId: string): Promise<SpotifyAlbum> {
-  return invoke<SpotifyAlbum>('api_get_album', {
-    clientId: clientId(),
-    albumId,
-  });
+  return req<SpotifyAlbum>('api_get_album', { albumId });
 }
 
 export async function apiGetArtist(artistId: string): Promise<SpotifyArtist> {
-  return invoke<SpotifyArtist>('api_get_artist', {
-    clientId: clientId(),
-    artistId,
-  });
+  return req<SpotifyArtist>('api_get_artist', { artistId });
 }
 
 export async function apiGetArtistTopTracks(
   artistId: string,
   market?: string,
 ): Promise<ArtistTopTracks> {
-  return invoke<ArtistTopTracks>('api_get_artist_top_tracks', {
-    clientId: clientId(),
-    artistId,
-    market,
-  });
+  return req<ArtistTopTracks>('api_get_artist_top_tracks', { artistId, market });
 }
 
 export async function apiGetArtistAlbums(
@@ -107,21 +86,13 @@ export async function apiGetArtistAlbums(
   limit?: number,
   offset?: number,
 ): Promise<ArtistAlbums> {
-  return invoke<ArtistAlbums>('api_get_artist_albums', {
-    clientId: clientId(),
-    artistId,
-    limit,
-    offset,
-  });
+  return req<ArtistAlbums>('api_get_artist_albums', { artistId, limit, offset });
 }
 
 export async function apiGetRelatedArtists(
   artistId: string,
 ): Promise<ArtistRelatedArtists> {
-  return invoke<ArtistRelatedArtists>('api_get_related_artists', {
-    clientId: clientId(),
-    artistId,
-  });
+  return req<ArtistRelatedArtists>('api_get_related_artists', { artistId });
 }
 
 export async function apiSearch(
@@ -130,35 +101,21 @@ export async function apiSearch(
   limit?: number,
   offset?: number,
 ): Promise<SearchResult> {
-  return invoke<SearchResult>('api_search', {
-    clientId: clientId(),
-    query,
-    types: types.join(','),
-    limit,
-    offset,
-  });
+  return req<SearchResult>('api_search', { query, types: types.join(','), limit, offset });
 }
 
 export async function apiGetNewReleases(
   limit?: number,
   offset?: number,
 ): Promise<NewReleases> {
-  return invoke<NewReleases>('api_get_new_releases', {
-    clientId: clientId(),
-    limit,
-    offset,
-  });
+  return req<NewReleases>('api_get_new_releases', { limit, offset });
 }
 
 export async function apiGetFeaturedPlaylists(
   limit?: number,
   offset?: number,
 ): Promise<FeaturedPlaylists> {
-  return invoke<FeaturedPlaylists>('api_get_featured_playlists', {
-    clientId: clientId(),
-    limit,
-    offset,
-  });
+  return req<FeaturedPlaylists>('api_get_featured_playlists', { limit, offset });
 }
 
 export async function apiGetRecommendations(
@@ -167,42 +124,26 @@ export async function apiGetRecommendations(
   seedGenres?: string,
   limit?: number,
 ): Promise<Recommendations> {
-  return invoke<Recommendations>('api_get_recommendations', {
-    clientId: clientId(),
-    seedArtists,
-    seedTracks,
-    seedGenres,
-    limit,
-  });
+  return req<Recommendations>('api_get_recommendations', { seedArtists, seedTracks, seedGenres, limit });
 }
 
 export async function apiGetCategories(): Promise<CategoriesList> {
-  return invoke<CategoriesList>('api_get_categories', {
-    clientId: clientId(),
-  });
+  return req<CategoriesList>('api_get_categories', {});
 }
 
 export async function apiGetCurrentlyPlaying(): Promise<CurrentlyPlaying> {
-  return invoke<CurrentlyPlaying>('api_get_currently_playing', {
-    clientId: clientId(),
-  });
+  return req<CurrentlyPlaying>('api_get_currently_playing', {});
 }
 
 export async function apiTransferPlayback(
   deviceIds: string[],
   play?: boolean,
 ): Promise<void> {
-  return invoke('api_transfer_playback', {
-    clientId: clientId(),
-    deviceIds,
-    play,
-  });
+  return req<void>('api_transfer_playback', { deviceIds, play });
 }
 
 export async function apiGetAvailableDevices(): Promise<Device[]> {
-  return invoke<Device[]>('api_get_available_devices', {
-    clientId: clientId(),
-  });
+  return req<Device[]>('api_get_available_devices', {});
 }
 
 export async function apiPlay(
@@ -211,18 +152,9 @@ export async function apiPlay(
   uris?: string[],
   contextUri?: string,
 ): Promise<void> {
-  return invoke('api_play', {
-    clientId: clientId(),
-    deviceId,
-    uri,
-    uris,
-    contextUri,
-  });
+  return req<void>('api_play', { deviceId, uri, uris, contextUri });
 }
 
 export async function apiPause(deviceId: string): Promise<void> {
-  return invoke('api_pause', {
-    clientId: clientId(),
-    deviceId,
-  });
+  return req<void>('api_pause', { deviceId });
 }

@@ -13,14 +13,18 @@ extensions, and custom apps.
 
 ## Status
 
-**Phases 1-5 complete.** A production-ready desktop Spotify client with:
+**Core complete.** A production-ready desktop Spotify client with:
 
 - **Spotify OAuth** via PKCE — login, token refresh, OS keychain storage
-- **Playback** via Spotify Web Playback SDK — play/pause/seek/volume/next/prev with full transport controls
+- **Playback** via Spotify Web Playback SDK (default) **or** librespot native engine (opt-in, feature-gated) — play/pause/seek/volume/next/prev with full transport controls
 - **Library browsing** — playlists, liked songs, albums, artists, search
 - **Home/Browse** — featured, new releases, recommendations
-- **Design system** — CSS custom property tokens, dark theme, Inter type scale, responsive layout
-- **Mod system** (Spicetify-parity) — themes, extensions, and custom apps from `mods/` folder with no rebuild
+- **Mod system** (Spicetify-parity) — themes (CSS injection), extensions (iframe sandbox), custom apps (tabs) from `mods/` folder with no rebuild
+- **Design system** — 72 CSS custom property tokens, dark theme, Inter type scale, responsive layout
+- **Accessibility** — ARIA labels, keyboard navigation, skip-link, reduced-motion, focus-visible
+- **Performance** — lazy-loaded views, code-split chunks, compositor-only animations
+- **Error boundary**, **keyboard shortcuts** (Space, arrows), **Media Session API** (OS media keys)
+- **Hardened sandbox** for extensions — no access to Tauri IPC, `localStorage`, or arbitrary hosts
 
 ### Mod system
 
@@ -96,3 +100,7 @@ See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 ## License
 
 MIT
+
+---
+
+**Disclaimer:** Litetify is an independent open-source project and is not affiliated with, authorized, maintained, or endorsed by Spotify. "Spotify" is a registered trademark of Spotify AB.

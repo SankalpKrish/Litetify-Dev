@@ -135,12 +135,24 @@ pub fn scan_mods() -> Vec<ModEntry> {
 }
 
 pub fn read_mod_file(mod_path: &str, file_path: &str) -> Result<String, String> {
-    let full_path = PathBuf::from(mod_path).join(file_path);
-    fs::read_to_string(&full_path).map_err(|e| format!("Failed to read {}: {}", full_path.display(), e))
+    let base = mods_path().canonicalize().map_err(|_| "Invalid mods directory".to_string())?;
+    let mod_dir = PathBuf::from(mod_path).canonicalize().map_err(|e| format!("Invalid mod path: {}", e))?;
+    if !mod_dir.starts_with(&base) {
+        return Err("Access denied: mod path outside mods directory".into());
+    }
+    let requested = mod_dir.join(file_path);
+    let canonical = requested.canonicalize().map_err(|e| format!("Cannot access file: {}", e))?;
+    if !canonical.starts_with(&mod_dir) {
+        return Err("Path traversal denied".into());
+    }
+    fs::read_to_string(&canonical).map_err(|e| format!("Failed to read {}: {}", canonical.display(), e))
 }
 
 pub fn mods_path() -> PathBuf {
-    let exe = std::env::current_exe().unwrap_or_default();
+    let exe = std::env::current_exe().unwrap_or_else(|e| {
+        eprintln!("Warning: cannot resolve executable path: {}", e);
+        PathBuf::new()
+    });
     let exe_dir = exe.parent().unwrap_or(std::path::Path::new("."));
     let path = exe_dir.to_path_buf();
     // during development, look for mods/ next to source

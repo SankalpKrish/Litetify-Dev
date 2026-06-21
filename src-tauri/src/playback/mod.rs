@@ -1,5 +1,8 @@
 pub mod websdk;
 
+#[cfg(feature = "librespot")]
+pub mod librespot;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

@@ -80,7 +80,7 @@ pub async fn refresh_access_token(
 
     if !resp.status().is_success() {
         let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
+        let body = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         return Err(format!("refresh failed ({status}): {body}"));
     }
 
@@ -94,8 +94,12 @@ pub async fn get_valid_access_token(client_id: &str) -> Result<String, String> {
 
     if is_token_expired(&stored) {
         let new_tokens = refresh_access_token(client_id, &stored.refresh_token).await?;
-        store_tokens(&new_tokens)?;
-        Ok(new_tokens.access_token)
+        let mut tokens_to_store = new_tokens;
+        if tokens_to_store.refresh_token.is_none() {
+            tokens_to_store.refresh_token = Some(stored.refresh_token.clone());
+        }
+        store_tokens(&tokens_to_store)?;
+        Ok(tokens_to_store.access_token)
     } else {
         Ok(stored.access_token)
     }

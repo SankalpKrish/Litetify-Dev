@@ -3,6 +3,7 @@ import { usePlaylists } from '../lib/queries/usePlaylists';
 import { useModsStore } from '../mods';
 
 interface SidebarProps {
+  devMode: boolean;
   currentView: string;
   currentPlaylistId?: string;
   currentModId?: string;
@@ -44,14 +45,14 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
   }
 });
 
-export function Sidebar({ currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
+export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
   const { data: playlists } = usePlaylists(50);
   const customViews = useModsStore((s) => s.customViews);
 
   const sidebarItems = useMemo(() => {
-    const items: { id: string; label: string }[] = [];
+    const items: { id: string; label: string; icon: string }[] = [];
     customViews.forEach((view, id) => {
-      items.push({ id, label: view.label });
+      items.push({ id, label: view.label, icon: view.icon });
     });
     return items;
   }, [customViews]);
@@ -62,6 +63,7 @@ export function Sidebar({ currentView, currentPlaylistId, currentModId, onNaviga
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">L</div>
           <span className="sidebar-logo-text">Litetify</span>
+          {devMode && <span className="dev-badge">DEV</span>}
         </div>
       </div>
 
@@ -90,6 +92,7 @@ export function Sidebar({ currentView, currentPlaylistId, currentModId, onNaviga
                 onClick={() => onNavigate('mod', { modId: item.id })}
                 aria-label={item.label}
               >
+                {item.icon && <span className="sidebar-link-icon"><NavIcon icon={item.icon} /></span>}
                 {item.label}
               </button>
             ))}
