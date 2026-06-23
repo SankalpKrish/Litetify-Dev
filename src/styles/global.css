@@ -204,6 +204,11 @@ a {
 }
 
 .sidebar-playlist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--lt-space-md);
+  width: 100%;
+  text-align: left;
   background: none;
   border: none;
   font: inherit;
@@ -214,18 +219,38 @@ a {
   font-size: var(--lt-font-size-base);
   color: var(--lt-fg-secondary);
   border-radius: var(--lt-radius-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color var(--lt-transition-fast);
+  transition: color var(--lt-transition-fast), background var(--lt-transition-fast);
 }
 
 .sidebar-playlist-item:hover {
   color: var(--lt-fg-primary);
+  background: var(--lt-bg-highlight);
 }
 
 .sidebar-playlist-item-active {
   color: var(--lt-fg-primary);
+}
+
+.sidebar-playlist-thumb {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--lt-radius-sm);
+  object-fit: cover;
+  background: var(--lt-surface-elevated);
+}
+
+.sidebar-playlist-thumb-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lt-fg-tertiary);
+}
+
+.sidebar-playlist-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ─── Page headers ────────────────────────────────────── */
@@ -385,6 +410,29 @@ a {
   text-overflow: ellipsis;
 }
 
+.track-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--lt-space-md);
+  min-width: 0;
+}
+
+.track-art {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--lt-radius-sm);
+  object-fit: cover;
+  background: var(--lt-surface-elevated);
+}
+
+.track-art-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lt-fg-tertiary);
+}
+
 .track-artist {
   font-size: var(--lt-font-size-sm);
   color: var(--lt-fg-secondary);
@@ -394,25 +442,44 @@ a {
 }
 
 .track-artist-link {
+  /* reset native <button> chrome so it reads as an inline text link */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
   cursor: pointer;
   transition: color var(--lt-transition-fast);
 }
 
 .track-artist-link:hover {
   color: var(--lt-fg-primary);
+  text-decoration: underline;
 }
 
 .track-album {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
   color: var(--lt-fg-secondary);
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
   cursor: pointer;
   transition: color var(--lt-transition-fast);
 }
 
 .track-album:hover {
   color: var(--lt-fg-primary);
+  text-decoration: underline;
 }
 
 .track-duration {
@@ -525,15 +592,23 @@ a {
 }
 
 .section-link {
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  padding: var(--lt-space-xs) var(--lt-space-md);
+  border-radius: var(--lt-radius-full);
   font-size: var(--lt-font-size-sm);
   font-weight: var(--lt-font-weight-semibold);
   color: var(--lt-fg-secondary);
-  cursor: pointer;
-  transition: color var(--lt-transition-fast);
+  background: var(--lt-bg-elevated);
+  transition: color var(--lt-transition-fast), background var(--lt-transition-fast);
 }
 
 .section-link:hover {
   color: var(--lt-fg-primary);
+  background: var(--lt-bg-highlight);
 }
 
 /* ─── Detail header ─────────────────────────────────────── */

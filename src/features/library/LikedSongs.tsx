@@ -65,8 +65,9 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
         <button
           className="play-btn"
           onClick={() => {
+            const queue = data.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
             const first = data.items[0]?.track;
-            if (first) playTrack(first.uri);
+            if (first) playTrack(first.uri, { uris: queue, offsetUri: first.uri });
           }}
           aria-label="Play"
         >
@@ -88,13 +89,14 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
         <tbody>
           {data.items.map((item, idx) => {
             const track = item.track;
+            const queue = data.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
             return (
               <tr
                 key={track.id ?? `local-${idx}-${track.uri}`}
                 className="track-row"
-                onClick={() => playTrack(track.uri)}
+                onClick={() => playTrack(track.uri, { uris: queue, offsetUri: track.uri })}
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { uris: queue, offsetUri: track.uri }); }}
               >
                 <td className="track-number">
                   <span className="track-number-static">{idx + 1}</span>

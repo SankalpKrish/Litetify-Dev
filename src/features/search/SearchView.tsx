@@ -23,10 +23,10 @@ export function SearchView({ onNavigate }: SearchViewProps) {
   const [debounced, setDebounced] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const { data, isLoading } = useSearch(
+  const { data, isLoading, isError, error } = useSearch(
     debounced,
     tabMap[activeTab],
-    20,
+    10,
   );
   const playTrack = usePlayerStore((s) => s.playTrack);
 
@@ -64,6 +64,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
           id="search-input"
           className="search-input"
           type="text"
+          autoComplete="off"
           placeholder="What do you want to listen to?"
           value={query}
           onChange={handleQueryChange}
@@ -98,7 +99,14 @@ export function SearchView({ onNavigate }: SearchViewProps) {
         </div>
       )}
 
-      {!isLoading && debounced && data && (
+      {isError && debounced && (
+        <div className="empty-state">
+          <div className="empty-state-title">Search failed</div>
+          <div className="empty-state-desc">{error?.message ? `Error: ${error.message}` : 'Something went wrong. Check your connection and try again.'}</div>
+        </div>
+      )}
+
+      {!isLoading && !isError && debounced && data && (
         <>
           {(activeTab === 'all' || activeTab === 'track') && data.tracks && data.tracks.items.length > 0 && (
             <section style={{ marginBottom: 'var(--lt-space-2xl)' }}>
@@ -115,13 +123,15 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.tracks.items.slice(0, 10).map((track, idx) => (
+                  {data.tracks.items.slice(0, 10).map((track, idx) => {
+                    const queue = data.tracks!.items.slice(0, 10).map((t) => t.uri).filter(Boolean);
+                    return (
                     <tr
                       key={track.id ?? `local-${idx}-${track.uri}`}
                       className="track-row"
-                      onClick={() => playTrack(track.uri)}
+                      onClick={() => playTrack(track.uri, { uris: queue, offsetUri: track.uri })}
                       tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { uris: queue, offsetUri: track.uri }); }}
                     >
                       <td className="track-number">
                         <span className="track-number-static">{idx + 1}</span>
@@ -166,7 +176,8 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                       </td>
                       <td className="track-duration">{formatDuration(track.duration_ms)}</td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </section>

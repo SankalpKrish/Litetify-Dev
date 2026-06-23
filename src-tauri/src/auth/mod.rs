@@ -17,6 +17,8 @@ const SCOPES: &str = "streaming \
     user-modify-playback-state \
     user-library-read \
     user-library-modify \
+    user-top-read \
+    user-read-recently-played \
     playlist-read-private \
     playlist-read-collaborative";
 

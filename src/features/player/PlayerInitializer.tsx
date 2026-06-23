@@ -10,19 +10,22 @@ import { useMediaSession } from './useMediaSession';
 
 export function PlayerInitializer() {
   const initialized = useRef(false);
-  const abortRef = useRef(false);
   const setState = usePlayerStore((s) => s.setState);
   const setEngine = usePlayerStore((s) => s.setEngine);
 
   useMediaSession();
 
   useEffect(() => {
+    // `initialized` guards against React 18 StrictMode's double-invocation in dev.
+    // We intentionally do NOT abort on cleanup: the StrictMode unmount/remount would
+    // otherwise cancel the in-flight token fetch and leave the player uninitialized.
     if (initialized.current) return;
     initialized.current = true;
 
     const engineType = getStoredEngineType();
     const engine = engineType === 'librespot' ? librespotEngine : webSdkEngine;
     const clientId = getStoredClientId();
+    console.log('[litetify][init] PlayerInitializer running. engineType =', engineType, 'clientId set =', !!clientId);
 
     setEngine(engine);
     setPlaybackEngine(engine);
@@ -38,22 +41,22 @@ export function PlayerInitializer() {
       return;
     }
 
+    console.log('[litetify][init] websdk path — fetching token then ensurePlayer');
     invoke<string>('get_valid_token', { clientId })
       .then((token) => {
-        if (abortRef.current) return;
+        console.log('[litetify][init] token acquired, calling ensurePlayer');
         return ensurePlayer(token);
       })
       .then(() => {
-        if (abortRef.current) return;
         void invoke('api_get_currently_playing', { clientId })
           .then((data) => {
-            if (abortRef.current) return;
+            // null when nothing is playing (Spotify 204)
             const cp = data as {
               item?: { name?: string; uri?: string; duration_ms?: number; artists?: { name: string }[]; album?: { images?: { url: string }[]; name?: string } } | null;
               is_playing?: boolean;
               progress_ms?: number | null;
-            };
-            if (cp.item) {
+            } | null;
+            if (cp?.item) {
               setState({
                 name: cp.item.name ?? null,
                 uri: cp.item.uri ?? null,
@@ -69,7 +72,6 @@ export function PlayerInitializer() {
           .catch((err) => console.error('[currently_playing] fetch failed:', err));
       })
       .catch((err) => console.error('Player init failed:', err));
-    return () => { abortRef.current = true; };
   }, [setState, setEngine]);
 
   return null;

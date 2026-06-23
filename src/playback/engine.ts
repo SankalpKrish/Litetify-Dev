@@ -16,8 +16,19 @@ export interface PlaybackState {
   deviceId: string | null;
 }
 
+/** Optional playback context so next/previous have a queue to traverse. */
+export interface PlayContext {
+  /** Spotify context URI, e.g. a playlist or album: spotify:playlist:... */
+  contextUri?: string;
+  /** Explicit queue of track URIs when there is no Spotify context
+   *  (e.g. search results, Liked Songs). */
+  uris?: string[];
+  /** Track URI to start at within the context/queue (sets the offset). */
+  offsetUri?: string;
+}
+
 export interface PlaybackEngine {
-  play(uri?: string): Promise<void>;
+  play(uri?: string, context?: PlayContext): Promise<void>;
   pause(): Promise<void>;
   resume(): Promise<void>;
   seek(positionMs: number): Promise<void>;

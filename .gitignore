@@ -8,6 +8,7 @@ dist/
 dist-ssr/
 build/
 src-tauri/target/
+src-tauri/src-tauri/
 
 # User-installed mods (local only, never tracked)
 /mods/*

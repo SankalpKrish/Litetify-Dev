@@ -1,6 +1,16 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+use serde::Serialize;
 use tauri::{AppHandle, Emitter};
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayRequest {
+    pub uri: Option<String>,
+    pub context_uri: Option<String>,
+    pub uris: Option<Vec<String>>,
+    pub offset_uri: Option<String>,
+}
 
 static ACTIVE_DEVICE_ID: Mutex<Option<String>> = Mutex::new(None);
 static ENGINE_READY: AtomicBool = AtomicBool::new(false);
@@ -19,8 +29,15 @@ pub fn get_active_device() -> Option<String> {
 }
 
 #[tauri::command]
-pub fn engine_play(app: AppHandle, uri: Option<String>) -> Result<(), String> {
-    app.emit("engine:play", uri).map_err(|e| e.to_string())
+pub fn engine_play(
+    app: AppHandle,
+    uri: Option<String>,
+    context_uri: Option<String>,
+    uris: Option<Vec<String>>,
+    offset_uri: Option<String>,
+) -> Result<(), String> {
+    let payload = PlayRequest { uri, context_uri, uris, offset_uri };
+    app.emit("engine:play", payload).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -53,4 +70,14 @@ pub fn engine_next(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn engine_previous(app: AppHandle) -> Result<(), String> {
     app.emit("engine:previous", ()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn engine_toggle_shuffle(app: AppHandle) -> Result<(), String> {
+    app.emit("engine:toggle-shuffle", ()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn engine_cycle_repeat(app: AppHandle) -> Result<(), String> {
+    app.emit("engine:cycle-repeat", ()).map_err(|e| e.to_string())
 }

@@ -88,13 +88,21 @@ export interface PlaylistTracks {
   next: string | null;
 }
 
+export interface PlaylistDetailTracks {
+  items: PlaylistTrackItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  next: string | null;
+}
+
 export interface PlaylistDetail {
   id: string;
   name: string;
   description: string | null;
   images: SpotifyImage[];
   owner: SpotifyOwner;
-  tracks: PlaylistTracks;
+  tracks: PlaylistDetailTracks;
   type_: string;
 }
 
@@ -232,3 +240,22 @@ export interface CurrentlyPlaying {
 }
 
 export type SearchType = 'track' | 'artist' | 'album' | 'playlist';
+
+export interface TopArtists {
+  items: SpotifyArtist[];
+  total: number;
+}
+
+export interface TopTracks {
+  items: SpotifyTrack[];
+  total: number;
+}
+
+export interface PlayHistory {
+  track: SpotifyTrack;
+  played_at: string;
+}
+
+export interface RecentlyPlayed {
+  items: PlayHistory[];
+}

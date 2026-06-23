@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; connect-src 'self' https://api.spotify.com https://accounts.spotify.com ipc: http://ipc.localhost; script-src 'self' https://sdk.scdn.co; style-src 'self' 'unsafe-inline'; frame-src 'self' https://sdk.scdn.co"
+      "csp": "default-src 'self'; img-src 'self' data: https://*.scdn.co https://*.spotifycdn.com; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://*.spotify.com wss://*.spotify.com https://*.scdn.co https://*.spotifycdn.com ipc: http://ipc.localhost; script-src 'self' https://sdk.scdn.co; style-src 'self' 'unsafe-inline'; frame-src 'self' https://sdk.scdn.co https://*.spotify.com; media-src 'self' blob: https://*.scdn.co; worker-src 'self' blob:"
     }
   },
   "bundle": {

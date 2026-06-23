@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useRef } from 'react';
 import { usePlayerStore } from './playerStore';
 import type { RepeatMode } from '../../playback/engine';
 
@@ -67,6 +67,9 @@ export const TransportControls = memo(function TransportControls() {
   const shuffle = usePlayerStore((s) => s.shuffle);
   const repeat = usePlayerStore((s) => s.repeat);
   const engine = useEngine();
+  // Tracks the time of the last "previous" press so a second press within the
+  // window skips to the previous track instead of restarting the current one.
+  const lastPrevPress = useRef(0);
 
   const togglePlay = useCallback(() => {
     if (!engine) return;
@@ -84,6 +87,22 @@ export const TransportControls = memo(function TransportControls() {
     [engine],
   );
 
+  // Spotify-style previous: restart the current track; press again within 3s to
+  // jump to the actual previous track.
+  const handlePrevious = useCallback(() => {
+    if (!engine) return;
+    const now = Date.now();
+    const withinWindow = now - lastPrevPress.current < 3000;
+    const positionMs = usePlayerStore.getState().positionMs;
+    if (withinWindow || positionMs < 3000) {
+      engine.previousTrack().catch(() => {});
+      lastPrevPress.current = 0; // consume the window
+    } else {
+      engine.seek(0).catch(() => {});
+      lastPrevPress.current = now;
+    }
+  }, [engine]);
+
   return (
     <div className="transport-controls">
       <button
@@ -96,7 +115,7 @@ export const TransportControls = memo(function TransportControls() {
       </button>
       <button
         className="ctrl-btn"
-        onClick={() => act(() => engine!.previousTrack())}
+        onClick={handlePrevious}
         title="Previous"
         aria-label="Previous track"
       >

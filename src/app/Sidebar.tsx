@@ -1,6 +1,22 @@
 import { memo, useMemo } from 'react';
 import { usePlaylists } from '../lib/queries/usePlaylists';
 import { useModsStore } from '../mods';
+import { getImage } from '../lib/utils';
+
+const PlaylistThumb = memo(function PlaylistThumb({ src, alt }: { src: string; alt: string }) {
+  if (src) {
+    return <img className="sidebar-playlist-thumb" src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" />;
+  }
+  return (
+    <span className="sidebar-playlist-thumb sidebar-playlist-thumb-fallback" aria-hidden="true" title={alt}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+    </span>
+  );
+});
 
 interface SidebarProps {
   devMode: boolean;
@@ -111,7 +127,8 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
                 onClick={() => onNavigate('playlist', { id: pl.id })}
                 aria-label={pl.name}
               >
-                {pl.name}
+                <PlaylistThumb src={getImage(pl.images, 64)} alt={pl.name} />
+                <span className="sidebar-playlist-name">{pl.name}</span>
               </button>
             ))}
           </div>

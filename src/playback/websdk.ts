@@ -1,7 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { usePlayerStore } from '../features/player/playerStore';
-import type { PlaybackEngine, PlaybackState, RepeatMode } from './engine';
+import { getStoredClientId } from '../features/auth/authStore';
+import type { PlaybackEngine, PlaybackState, RepeatMode, PlayContext } from './engine';
 
 declare global {
   interface Window {
@@ -116,7 +117,7 @@ async function connectToSDK(token: string): Promise<void> {
   player = new window.Spotify.Player({
     name: 'Litetify',
     getOAuthToken: (cb) => {
-      invoke<string>('get_valid_token', { clientId: '' })
+      invoke<string>('get_valid_token', { clientId: getStoredClientId() })
         .then(cb)
         .catch((err) => {
           console.warn('Token refresh failed, using initial token (may be expired):', err);
@@ -128,6 +129,7 @@ async function connectToSDK(token: string): Promise<void> {
 
   player.on('ready', (data: unknown) => {
     const d = data as { device_id: string };
+    console.log('[litetify][sdk] READY, device_id =', d.device_id);
     deviceId = d.device_id;
     ready = true;
     updateStore({ deviceId: d.device_id });
@@ -182,8 +184,14 @@ export async function ensurePlayer(token: string): Promise<void> {
   if (sdkPromise) return sdkPromise;
 
   sdkPromise = loadSDK().then(async () => {
+    console.log('[litetify][sdk] script loaded, connecting…');
     await connectToSDK(token);
+    console.log('[litetify][sdk] connect() returned, registering engine listeners');
     listenForEngineEvents();
+  }).catch((err) => {
+    console.error('[litetify][sdk] ensurePlayer failed:', err);
+    sdkPromise = null; // allow retry
+    throw err;
   });
   return sdkPromise;
 }
@@ -229,18 +237,31 @@ function listenForEngineEvents(): void {
   unlistenFns.forEach((fn) => fn());
   unlistenFns = [];
 
-  listen<string | null>('engine:play', (event) => {
-    const uri = event.payload;
+  listen<{ uri: string | null; contextUri: string | null; uris: string[] | null; offsetUri: string | null }>('engine:play', (event) => {
+    const { uri, contextUri, uris, offsetUri } = event.payload;
     const p = usePlayerStore.getState();
     const did = p.deviceId ?? '';
-    if (uri) {
-      void invoke('api_play', { clientId: '', deviceId: did, uri, uris: null, contextUri: null });
+    console.log('[litetify][sdk] engine:play received, uri =', uri, 'context =', contextUri, 'queue =', uris?.length ?? 0, 'deviceId =', did || '(none)');
+    if (!did) {
+      console.warn('[litetify][sdk] no device id yet — SDK not ready, play will fail');
+    }
+    if (uri || contextUri || (uris && uris.length)) {
+      const useContext = !!contextUri;
+      const useQueue = !useContext && !!(uris && uris.length);
+      void invoke('api_play', {
+        clientId: getStoredClientId(),
+        deviceId: did,
+        uri: useContext || useQueue ? null : uri,
+        uris: useQueue ? uris : null,
+        contextUri: contextUri ?? null,
+        offsetUri: useContext || useQueue ? (offsetUri ?? uri) : null,
+      }).catch((e) => console.error('[litetify][sdk] api_play failed:', e));
     } else {
       void invoke('api_transfer_playback', {
-        clientId: '',
+        clientId: getStoredClientId(),
         deviceIds: [did],
         play: true,
-      });
+      }).catch((e) => console.error('[litetify][sdk] api_transfer_playback failed:', e));
     }
   }).then((fn) => unlistenFns.push(fn));
 
@@ -260,19 +281,55 @@ function listenForEngineEvents(): void {
     ensureReady().then((p) => p.setVolume(event.payload / 100).catch(() => {}));
   }).then((fn) => unlistenFns.push(fn));
 
+  // next/previous/shuffle/repeat go through the Web API (targeting the active
+  // device) rather than the SDK methods: SDK next/previous are no-ops when a
+  // single track URI was played without a context/queue, and the SDK exposes no
+  // repeat control at all.
   listen('engine:next', () => {
-    ensureReady().then((p) => p.nextTrack().catch(() => {}));
+    const did = usePlayerStore.getState().deviceId ?? '';
+    if (!did) return;
+    void invoke('api_next', { clientId: getStoredClientId(), deviceId: did })
+      .catch((e) => console.error('[litetify][sdk] api_next failed:', e));
   }).then((fn) => unlistenFns.push(fn));
 
   listen('engine:previous', () => {
-    ensureReady().then((p) => p.previousTrack().catch(() => {}));
+    const did = usePlayerStore.getState().deviceId ?? '';
+    if (!did) return;
+    void invoke('api_previous', { clientId: getStoredClientId(), deviceId: did })
+      .catch((e) => console.error('[litetify][sdk] api_previous failed:', e));
+  }).then((fn) => unlistenFns.push(fn));
+
+  listen('engine:toggle-shuffle', () => {
+    const p = usePlayerStore.getState();
+    const did = p.deviceId ?? '';
+    if (!did) return;
+    const next = !p.shuffle;
+    p.setState({ shuffle: next });
+    void invoke('api_set_shuffle', { clientId: getStoredClientId(), deviceId: did, state: next })
+      .catch((e) => { p.setState({ shuffle: !next }); console.error('[litetify][sdk] api_set_shuffle failed:', e); });
+  }).then((fn) => unlistenFns.push(fn));
+
+  listen('engine:cycle-repeat', () => {
+    const p = usePlayerStore.getState();
+    const did = p.deviceId ?? '';
+    if (!did) return;
+    const order: RepeatMode[] = ['off', 'context', 'track'];
+    const next = order[(order.indexOf(p.repeat) + 1) % order.length];
+    p.setState({ repeat: next });
+    void invoke('api_set_repeat', { clientId: getStoredClientId(), deviceId: did, state: next })
+      .catch((e) => { p.setState({ repeat: p.repeat }); console.error('[litetify][sdk] api_set_repeat failed:', e); });
   }).then((fn) => unlistenFns.push(fn));
 }
 
 export const webSdkEngine: PlaybackEngine = {
-  async play(uri?: string) {
-    if (uri) {
-      await invoke('engine_play', { uri });
+  async play(uri?: string, context?: PlayContext) {
+    if (uri || context?.contextUri || context?.uris?.length) {
+      await invoke('engine_play', {
+        uri: uri ?? null,
+        contextUri: context?.contextUri ?? null,
+        uris: context?.uris ?? null,
+        offsetUri: context?.offsetUri ?? uri ?? null,
+      });
       return;
     }
     await invoke('engine_resume');

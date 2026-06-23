@@ -12,28 +12,34 @@ const HTML_SUCCESS: &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Litetify — Authentication complete</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Signed in to Litetify</title>
   <style>
     *,*::before,*::after{box-sizing:border-box}
-    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-    .card{text-align:center;padding:3rem 2rem;max-width:380px;width:100%}
-    .icon-wrap{width:64px;height:64px;border-radius:50%;background:rgba(29,185,84,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
-    .check{font-size:1.75rem;color:#1db954;line-height:1}
-    .logo{width:32px;height:32px;background:#1db954;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-weight:700;font-size:14px;color:#000}
-    h1{margin:0 0 0.5rem;font-size:1.25rem;font-weight:600;letter-spacing:-0.02em}
-    p{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
-    .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,0.06);border-top-color:#1db954;border-radius:50%;animation:spin 0.8s linear infinite;margin:1.5rem auto 0}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .wrap{text-align:center;padding:2.5rem 2rem;max-width:360px;width:100%}
+    .brand{width:36px;height:36px;background:#1db954;border-radius:6px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-weight:700;font-size:16px;color:#000}
+    .check-ring{width:56px;height:56px;border-radius:50%;background:rgba(29,185,84,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:fadeIn 0.35s ease-out}
+    .check{font-size:1.5rem;color:#1db954;line-height:1}
+    h1{margin:0 0 0.35rem;font-size:1.2rem;font-weight:600;letter-spacing:-0.015em}
+    .sub{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
+    .pill{display:inline-flex;align-items:center;gap:6px;margin-top:1.5rem;padding:6px 14px;border-radius:999px;background:rgba(29,185,84,0.1);border:1px solid rgba(29,185,84,0.2);font-size:0.78rem;color:#1db954;font-weight:500}
+    .pill-dot{width:6px;height:6px;border-radius:50%;background:#1db954;animation:pulse 1.8s ease-in-out infinite}
+    .footer{margin-top:2rem;font-size:0.72rem;color:#6b6b73;line-height:1.4}
+    @keyframes fadeIn{0%{opacity:0;transform:scale(0.88)}100%{opacity:1;transform:scale(1)}}
+    @keyframes pulse{0%,70%,100%{opacity:0.3}35%{opacity:1}}
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">L</div>
-    <div class="icon-wrap"><span class="check">&#10003;</span></div>
-    <h1>Authentication complete</h1>
-    <p>You can close this tab and return to Litetify.</p>
-    <div class="spinner"></div>
+  <div class="wrap">
+    <div class="brand">L</div>
+    <div class="check-ring"><span class="check">&#10003;</span></div>
+    <h1>You are signed in</h1>
+    <p class="sub">Your Spotify account has been connected to Litetify. You can safely close this window.</p>
+    <div class="pill"><span class="pill-dot"></span>Returning to app...</div>
+    <p class="footer">Litetify &mdash; a Spotify client</p>
   </div>
+  <script>window.close()</script>
 </body>
 </html>"#;
 
@@ -41,24 +47,27 @@ const HTML_ERROR: &str = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Litetify — Authentication failed</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign in failed — Litetify</title>
   <style>
     *,*::before,*::after{box-sizing:border-box}
-    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-    .card{text-align:center;padding:3rem 2rem;max-width:380px;width:100%}
-    .logo{width:32px;height:32px;background:#1db954;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-weight:700;font-size:14px;color:#000}
-    .icon-wrap{width:64px;height:64px;border-radius:50%;background:rgba(231,76,60,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
-    .error-x{font-size:1.5rem;color:#e74c3c;line-height:1}
-    h1{margin:0 0 0.5rem;font-size:1.25rem;font-weight:600;letter-spacing:-0.02em}
-    p{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
+    body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#0d0d0f;color:#f5f5f7;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+    .wrap{text-align:center;padding:2.5rem 2rem;max-width:360px;width:100%}
+    .brand{width:36px;height:36px;background:#1db954;border-radius:6px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-weight:700;font-size:16px;color:#000}
+    .x-ring{width:56px;height:56px;border-radius:50%;background:rgba(231,76,60,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem}
+    .x{font-size:1.5rem;color:#e74c3c;line-height:1}
+    h1{margin:0 0 0.35rem;font-size:1.2rem;font-weight:600;letter-spacing:-0.015em}
+    .sub{margin:0;font-size:0.85rem;color:#9b9ba3;line-height:1.5}
+    .footer{margin-top:2rem;font-size:0.72rem;color:#6b6b73;line-height:1.4}
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">L</div>
-    <div class="icon-wrap"><span class="error-x">&#10007;</span></div>
-    <h1>Authentication failed</h1>
-    <p>Please try logging in again.</p>
+  <div class="wrap">
+    <div class="brand">L</div>
+    <div class="x-ring"><span class="x">&#10007;</span></div>
+    <h1>Sign in failed</h1>
+    <p class="sub">The connection could not be completed. Close this window and try again from Litetify.</p>
+    <p class="footer">Litetify &mdash; a Spotify client</p>
   </div>
 </body>
 </html>"#;

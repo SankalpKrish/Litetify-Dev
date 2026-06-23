@@ -59,8 +59,9 @@ export function ArtistView({ artistId, onNavigate }: ArtistViewProps) {
             <button
               className="play-btn"
               onClick={() => {
+                const queue = topTracks.tracks.map((t) => t.uri).filter(Boolean);
                 const first = topTracks.tracks[0];
-                if (first) playTrack(first.uri);
+                if (first) playTrack(first.uri, { uris: queue, offsetUri: first.uri });
               }}
               aria-label="Play"
             >
@@ -79,13 +80,15 @@ export function ArtistView({ artistId, onNavigate }: ArtistViewProps) {
               </tr>
             </thead>
             <tbody>
-              {topTracks.tracks.map((track, idx) => (
+              {topTracks.tracks.map((track, idx) => {
+              const queue = topTracks.tracks.map((t) => t.uri).filter(Boolean);
+              return (
               <tr
                 key={track.id ?? `local-${idx}-${track.uri}`}
                 className="track-row"
-                onClick={() => playTrack(track.uri)}
+                onClick={() => playTrack(track.uri, { uris: queue, offsetUri: track.uri })}
                 tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { uris: queue, offsetUri: track.uri }); }}
               >
                   <td className="track-number">
                     <span className="track-number-static">{idx + 1}</span>
@@ -101,7 +104,8 @@ export function ArtistView({ artistId, onNavigate }: ArtistViewProps) {
                   </td>
                   <td className="track-duration">{formatDuration(track.duration_ms)}</td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </>

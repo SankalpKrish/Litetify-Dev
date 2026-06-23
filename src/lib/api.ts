@@ -18,6 +18,9 @@ import type {
   CurrentlyPlaying,
   Device,
   SearchType,
+  TopArtists,
+  TopTracks,
+  RecentlyPlayed,
 } from './types';
 import { getStoredClientId } from '../features/auth/authStore';
 
@@ -30,7 +33,13 @@ function clientId(): string {
 async function req<T>(cmd: string, args: Record<string, unknown>): Promise<T> {
   const id = clientId();
   if (!id) throw new Error('Client ID not configured');
-  return invoke<T>(cmd, { ...args, clientId: id });
+  try {
+    return await invoke<T>(cmd, { ...args, clientId: id });
+  } catch (e) {
+    // Tauri rejects with the raw string returned from Rust `Err(String)`.
+    // Wrap it in a real Error so UI error surfaces (error.message) work.
+    throw e instanceof Error ? e : new Error(typeof e === 'string' ? e : JSON.stringify(e));
+  }
 }
 
 export async function apiGetMe(): Promise<SpotifyUserProfile> {
@@ -131,8 +140,8 @@ export async function apiGetCategories(): Promise<CategoriesList> {
   return req<CategoriesList>('api_get_categories', {});
 }
 
-export async function apiGetCurrentlyPlaying(): Promise<CurrentlyPlaying> {
-  return req<CurrentlyPlaying>('api_get_currently_playing', {});
+export async function apiGetCurrentlyPlaying(): Promise<CurrentlyPlaying | null> {
+  return req<CurrentlyPlaying | null>('api_get_currently_playing', {});
 }
 
 export async function apiTransferPlayback(
@@ -157,4 +166,24 @@ export async function apiPlay(
 
 export async function apiPause(deviceId: string): Promise<void> {
   return req<void>('api_pause', { deviceId });
+}
+
+export async function apiGetTopArtists(
+  limit?: number,
+  offset?: number,
+): Promise<TopArtists> {
+  return req<TopArtists>('api_get_top_artists', { limit, offset });
+}
+
+export async function apiGetTopTracks(
+  limit?: number,
+  offset?: number,
+): Promise<TopTracks> {
+  return req<TopTracks>('api_get_top_tracks', { limit, offset });
+}
+
+export async function apiGetRecentlyPlayed(
+  limit?: number,
+): Promise<RecentlyPlayed> {
+  return req<RecentlyPlayed>('api_get_recently_played', { limit });
 }

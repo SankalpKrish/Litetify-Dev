@@ -67,7 +67,7 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
           className="play-btn"
           onClick={() => {
             const first = album.tracks.items[0];
-            if (first) playTrack(first.uri);
+            if (first) playTrack(first.uri, { contextUri: album.uri || `spotify:album:${albumId}`, offsetUri: first.uri });
           }}
           aria-label="Play"
         >
@@ -90,9 +90,9 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
             <tr
               key={track.id ?? `local-${idx}-${track.uri}`}
               className="track-row"
-              onClick={() => playTrack(track.uri)}
+              onClick={() => playTrack(track.uri, { contextUri: album.uri || `spotify:album:${albumId}`, offsetUri: track.uri })}
               tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { contextUri: album.uri || `spotify:album:${albumId}`, offsetUri: track.uri }); }}
             >
               <td className="track-number">
                 <span className="track-number-static">{idx + 1}</span>

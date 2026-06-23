@@ -112,6 +112,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
               ref={clientIdInputRef}
               className="auth-input"
               type="text"
+              autoComplete="off"
               placeholder="Paste your Spotify Client ID"
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}

@@ -53,6 +53,13 @@ pub fn run() {
             api::api_get_available_devices,
             api::api_play,
             api::api_pause,
+            api::api_next,
+            api::api_previous,
+            api::api_set_shuffle,
+            api::api_set_repeat,
+            api::api_get_top_artists,
+            api::api_get_top_tracks,
+            api::api_get_recently_played,
             playback::websdk::set_active_device,
             playback::websdk::get_active_device,
             playback::websdk::engine_play,
@@ -62,6 +69,8 @@ pub fn run() {
             playback::websdk::engine_set_volume,
             playback::websdk::engine_next,
             playback::websdk::engine_previous,
+            playback::websdk::engine_toggle_shuffle,
+            playback::websdk::engine_cycle_repeat,
             #[cfg(feature = "librespot")]
             playback::librespot::init_librespot,
             #[cfg(feature = "librespot")]

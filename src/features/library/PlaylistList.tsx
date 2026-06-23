@@ -5,6 +5,29 @@ interface PlaylistListProps {
   onNavigate: (view: string, params?: Record<string, string>) => void;
 }
 
+function DefaultImage() {
+  return (
+    <div className="card-image" style={{
+      background: 'var(--lt-surface-elevated)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'var(--lt-fg-tertiary)',
+    }}>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+    </div>
+  );
+}
+
+function CardImage({ src, alt }: { src: string; alt: string }) {
+  if (!src) return <DefaultImage />;
+  return <img className="card-image" src={src} alt={alt} loading="eager" decoding="async" />;
+}
+
 export function PlaylistList({ onNavigate }: PlaylistListProps) {
   const { data, isLoading, error } = usePlaylists(50);
 
@@ -42,12 +65,7 @@ export function PlaylistList({ onNavigate }: PlaylistListProps) {
       <div className="card-grid">
         {data.items.map((pl) => (
           <div key={pl.id} className="card" onClick={() => onNavigate('playlist', { id: pl.id })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate('playlist', { id: pl.id }); } }}>
-            <img
-              className="card-image"
-              src={getImage(pl.images)}
-              alt={pl.name}
-              loading="lazy"
-            />
+            <CardImage src={getImage(pl.images)} alt={pl.name} />
             <div>
               <div className="card-title">{pl.name}</div>
               <div className="card-subtitle">

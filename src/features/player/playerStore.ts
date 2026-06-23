@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { PlaybackState, PlaybackEngine } from '../../playback/engine';
+import type { PlaybackState, PlaybackEngine, PlayContext } from '../../playback/engine';
 
 export type EngineType = 'websdk' | 'librespot';
 
@@ -26,7 +26,7 @@ export interface PlayerStore extends PlaybackState {
   setEngineType: (t: EngineType) => void;
   getEngineType: () => EngineType;
   getEngine: () => PlaybackEngine | null;
-  playTrack: (uri: string) => Promise<void>;
+  playTrack: (uri: string, context?: PlayContext) => Promise<void>;
 }
 
 let engineRef: PlaybackEngine | null = null;
@@ -60,9 +60,9 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   setEngineType: (t) => { engineType = t; },
   getEngineType: () => engineType,
   getEngine: () => engineRef,
-  playTrack: async (uri: string) => {
+  playTrack: async (uri: string, context?: PlayContext) => {
     if (engineRef) {
-      await engineRef.play(uri);
+      await engineRef.play(uri, context);
     }
   },
 }));

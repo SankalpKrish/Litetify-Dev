@@ -1,8 +1,29 @@
 use crate::auth::tokens;
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, RETRY_AFTER};
-use serde::de::DeserializeOwned;
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, RETRY_AFTER};
+use serde::de::{DeserializeOwned, Deserializer};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+
+fn deserialize_null_to_default<'de, D, T>(d: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Default + Deserialize<'de>,
+{
+    Option::<T>::deserialize(d).map(|x| x.unwrap_or_default())
+}
+
+/// Spotify's `/search` (and some paging) responses can include `null` entries
+/// inside `items` arrays for content that is unavailable/deprecated. A plain
+/// `Vec<T>` fails to deserialize on those nulls, so we accept `Vec<Option<T>>`
+/// and drop the `null`s.
+fn deserialize_vec_skip_nulls<'de, D, T>(d: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let opts = Option::<Vec<Option<T>>>::deserialize(d)?;
+    Ok(opts.unwrap_or_default().into_iter().flatten().collect())
+}
 
 const BASE_URL: &str = "https://api.spotify.com/v1";
 const MAX_RETRIES: u32 = 3;
@@ -21,6 +42,7 @@ pub struct SpotifyUserProfile {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyImage {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub url: String,
     pub height: Option<i32>,
     pub width: Option<i32>,
@@ -42,13 +64,18 @@ pub struct SpotifyPlaylists {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyPlaylist {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
     pub description: Option<String>,
     pub public: Option<bool>,
     pub collaborative: bool,
     pub owner: SpotifyOwner,
     pub images: Vec<SpotifyImage>,
+    // Migration renamed the per-playlist track-count summary `tracks` -> `items`.
+    // Accept either so the track count shows on list/card views.
+    #[serde(default, alias = "items")]
     pub tracks: PlaylistTracksRef,
     #[serde(rename = "type")]
     pub type_: String,
@@ -56,49 +83,99 @@ pub struct SpotifyPlaylist {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyOwner {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
     pub display_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlaylistTracksRef {
+    #[serde(default)]
     pub total: i32,
+    #[serde(default)]
     pub href: String,
+}
+
+impl Default for PlaylistTracksRef {
+    fn default() -> Self {
+        Self { total: 0, href: String::new() }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlaylistDetail {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
     pub description: Option<String>,
     pub images: Vec<SpotifyImage>,
     pub owner: SpotifyOwner,
-    pub tracks: PlaylistTracks,
+    // Feb/Mar 2026 dev-mode migration renamed the playlist `tracks` paging
+    // object to `items`. Accept either so the track count + inline items
+    // populate regardless of which name the API returns.
+    #[serde(default, alias = "items")]
+    pub tracks: PlaylistDetailTracks,
     #[serde(rename = "type")]
     pub type_: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PlaylistTracks {
+pub struct PlaylistDetailTracks {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
     pub items: Vec<PlaylistTrackItem>,
     pub total: i32,
+    #[serde(default)]
     pub offset: i32,
+    #[serde(default)]
     pub limit: i32,
+    #[serde(default)]
     pub next: Option<String>,
+}
+
+impl Default for PlaylistDetailTracks {
+    fn default() -> Self {
+        Self { items: Vec::new(), total: 0, offset: 0, limit: 0, next: None }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlaylistTracks {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
+    pub items: Vec<PlaylistTrackItem>,
+    pub total: i32,
+    #[serde(default)]
+    pub offset: i32,
+    #[serde(default)]
+    pub limit: i32,
+    #[serde(default)]
+    pub next: Option<String>,
+}
+
+impl Default for PlaylistTracks {
+    fn default() -> Self {
+        Self { items: Vec::new(), total: 0, offset: 0, limit: 0, next: None }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PlaylistTrackItem {
     pub added_at: Option<String>,
+    // Migration renamed the per-item `track` field to `item`. Accept both.
+    #[serde(alias = "item")]
     pub track: Option<SpotifyTrack>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyTrack {
     pub id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub uri: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub duration_ms: i32,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub artists: Vec<SpotifyArtistBrief>,
     pub album: Option<SpotifyAlbumBrief>,
     pub disc_number: Option<i32>,
@@ -110,32 +187,44 @@ pub struct SpotifyTrack {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyArtistBrief {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub uri: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyAlbumBrief {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
     pub images: Vec<SpotifyImage>,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub uri: String,
     pub release_date: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyAlbum {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub artists: Vec<SpotifyArtistBrief>,
     pub images: Vec<SpotifyImage>,
+    #[serde(default)]
     pub tracks: AlbumTracks,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub uri: String,
     pub release_date: Option<String>,
     pub total_tracks: i32,
     pub label: Option<String>,
     pub popularity: Option<i32>,
+    #[serde(default)]
     pub genres: Vec<String>,
     #[serde(rename = "type")]
     pub type_: String,
@@ -150,14 +239,24 @@ pub struct AlbumTracks {
     pub next: Option<String>,
 }
 
+impl Default for AlbumTracks {
+    fn default() -> Self {
+        Self { items: Vec::new(), total: 0, offset: 0, limit: 0, next: None }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpotifyArtist {
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub id: String,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub name: String,
     pub images: Vec<SpotifyImage>,
+    #[serde(default)]
     pub genres: Vec<String>,
     pub popularity: Option<i32>,
     pub followers: Option<Followers>,
+    #[serde(default, deserialize_with = "deserialize_null_to_default")]
     pub uri: String,
     #[serde(rename = "type")]
     pub type_: String,
@@ -197,24 +296,28 @@ pub struct SearchResult {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchTracks {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
     pub items: Vec<SpotifyTrack>,
     pub total: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchArtists {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
     pub items: Vec<SpotifyArtist>,
     pub total: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchAlbums {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
     pub items: Vec<SpotifyAlbum>,
     pub total: i32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchPlaylists {
+    #[serde(default, deserialize_with = "deserialize_vec_skip_nulls")]
     pub items: Vec<SpotifyPlaylist>,
     pub total: i32,
 }
@@ -365,9 +468,17 @@ async fn call_api<T: DeserializeOwned>(
 
         if status.is_success() {
             let body_text = resp.text().await.map_err(|e| format!("read body: {e}"))?;
-            return serde_json::from_str(&body_text)
-                .map_err(|e| format!("parse: {e} — body: {body_text:.200}"));
+            // 204 No Content (and some 200s) return an empty body — e.g.
+            // /me/player/currently-playing when nothing is playing. Treat an
+            // empty body as JSON null so Option/unit return types parse cleanly.
+            let to_parse = if body_text.trim().is_empty() { "null" } else { &body_text };
+            return serde_json::from_str(to_parse).map_err(|e| {
+                eprintln!("[litetify][api] PARSE FAIL {method} {url} (query={query:?}): {e}\n  body: {}", &body_text.chars().take(800).collect::<String>());
+                format!("parse error: {e}")
+            });
         }
+
+        eprintln!("[litetify][api] HTTP {} {method} {url} (query={query:?})", status.as_u16());
 
         if status == reqwest::StatusCode::UNAUTHORIZED {
             if !has_retried_401 {
@@ -453,7 +564,12 @@ pub async fn api_get_playlist_tracks(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<PlaylistTracks, String> {
+    // Use `/items` (not the removed `/tracks`): the Feb/Mar 2026 dev-mode
+    // migration removed `GET /playlists/{id}/tracks`, which now returns 403.
     let path = format!("/playlists/{playlist_id}/items");
+    // `market` is intentionally omitted: with a user access token Spotify applies
+    // the account's country automatically. The legacy `from_token` value is no
+    // longer accepted by the endpoint validator and returns HTTP 400.
     let mut params: Vec<(&str, String)> = Vec::new();
     if let Some(l) = limit {
         params.push(("limit", l.to_string()));
@@ -501,8 +617,13 @@ pub async fn api_get_artist_top_tracks(
     market: Option<String>,
 ) -> Result<ArtistTopTracks, String> {
     let path = format!("/artists/{artist_id}/top-tracks");
-    let market = market.unwrap_or_else(|| "from_token".into());
-    get_json(&client_id, &path, &[("market", &market)]).await
+    // Only pass `market` when the caller supplies a real ISO 3166-1 alpha-2 code.
+    // Otherwise omit it so Spotify uses the user account's country (the legacy
+    // `from_token` value is rejected with HTTP 400 by the current API).
+    match market {
+        Some(m) => get_json(&client_id, &path, &[("market", m.as_str())]).await,
+        None => get_json(&client_id, &path, &[]).await,
+    }
 }
 
 #[tauri::command]
@@ -541,6 +662,8 @@ pub async fn api_search(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<SearchResult, String> {
+    // `market` omitted: Spotify uses the user account's country from the access
+    // token. Passing `from_token` here returns HTTP 400 from the search endpoint.
     let mut params: Vec<(&str, String)> = vec![
         ("q", query),
         ("type", types),
@@ -620,8 +743,11 @@ pub async fn api_get_categories(client_id: String) -> Result<CategoriesList, Str
 #[tauri::command]
 pub async fn api_get_currently_playing(
     client_id: String,
-) -> Result<CurrentlyPlaying, String> {
-    get_json(&client_id, "/me/player/currently-playing", &[("market", "from_token")]).await
+) -> Result<Option<CurrentlyPlaying>, String> {
+    // `market` omitted: the user access token already scopes results to the
+    // account's country; `from_token` is no longer an accepted value.
+    // Returns None when Spotify replies 204 (nothing playing) -> empty body -> null.
+    get_json(&client_id, "/me/player/currently-playing", &[]).await
 }
 
 #[tauri::command]
@@ -670,24 +796,33 @@ pub async fn api_play(
     uri: Option<String>,
     uris: Option<Vec<String>>,
     context_uri: Option<String>,
+    offset_uri: Option<String>,
 ) -> Result<(), String> {
     let token = tokens::get_valid_access_token(&client_id).await?;
     let headers = build_headers(&token)?;
     let client = reqwest::Client::new();
     let url = format!("{BASE_URL}/me/player/play");
 
-    let mut body = serde_json::json!({});
-    if uri.is_some() && (uris.is_some() || context_uri.is_some()) {
-        // TODO: use structured logging (e.g., log::warn!) when logging crate is added
-        eprintln!("[warn] api_play: multiple playback parameters provided; using uri, ignoring others");
-    }
-    if let Some(u) = uri {
-        body = serde_json::json!({ "uris": [u] });
-    } else if let Some(u) = uris {
-        body = serde_json::json!({ "uris": u });
-    } else if let Some(ctx) = context_uri {
-        body = serde_json::json!({ "context_uri": ctx });
-    }
+    // Build a queue so next/previous work:
+    //  - context_uri (playlist/album) + optional offset, OR
+    //  - an explicit uris list + optional offset (used when there is no Spotify
+    //    context, e.g. search results or Liked Songs), OR
+    //  - a single uri (no queue — last resort).
+    let body = if let Some(ctx) = context_uri {
+        match offset_uri {
+            Some(off) => serde_json::json!({ "context_uri": ctx, "offset": { "uri": off } }),
+            None => serde_json::json!({ "context_uri": ctx }),
+        }
+    } else if let Some(list) = uris {
+        match offset_uri {
+            Some(off) => serde_json::json!({ "uris": list, "offset": { "uri": off } }),
+            None => serde_json::json!({ "uris": list }),
+        }
+    } else if let Some(u) = uri {
+        serde_json::json!({ "uris": [u] })
+    } else {
+        serde_json::json!({})
+    };
 
     let resp = client
         .put(&url)
@@ -718,6 +853,8 @@ pub async fn api_pause(client_id: String, device_id: String) -> Result<(), Strin
         .put(&url)
         .headers(headers)
         .query(&[("device_id", &device_id)])
+        .header(CONTENT_LENGTH, "0")
+        .body(Vec::<u8>::new())
         .send()
         .await
         .map_err(|e| format!("pause request failed: {e}"))?;
@@ -729,6 +866,142 @@ pub async fn api_pause(client_id: String, device_id: String) -> Result<(), Strin
         let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
         Err(format!("pause failed ({status}): {body_text}"))
     }
+}
+
+// ── Player transport controls (Web API) ──
+// These target the active device directly, so they work even when playback was
+// started from a single track URI without a context/queue (where the Web
+// Playback SDK's own next/previous are no-ops).
+
+async fn player_control(
+    client_id: &str,
+    method: reqwest::Method,
+    path: &str,
+    extra_query: &[(&str, &str)],
+    label: &str,
+) -> Result<(), String> {
+    let token = tokens::get_valid_access_token(client_id).await?;
+    let headers = build_headers(&token)?;
+    let client = reqwest::Client::new();
+    let url = format!("{BASE_URL}{path}");
+    let resp = client
+        .request(method, &url)
+        .headers(headers)
+        .query(extra_query)
+        // Spotify's player PUT/POST endpoints require a Content-Length header.
+        // Without an explicit `Content-Length: 0` they return HTTP 411.
+        .header(CONTENT_LENGTH, "0")
+        .body(Vec::<u8>::new())
+        .send()
+        .await
+        .map_err(|e| format!("{label} request failed: {e}"))?;
+    if resp.status().is_success() || resp.status().as_u16() == 204 {
+        Ok(())
+    } else {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
+        Err(format!("{label} failed ({status}): {body_text}"))
+    }
+}
+
+#[tauri::command]
+pub async fn api_next(client_id: String, device_id: String) -> Result<(), String> {
+    player_control(&client_id, reqwest::Method::POST, "/me/player/next", &[("device_id", device_id.as_str())], "next").await
+}
+
+#[tauri::command]
+pub async fn api_previous(client_id: String, device_id: String) -> Result<(), String> {
+    player_control(&client_id, reqwest::Method::POST, "/me/player/previous", &[("device_id", device_id.as_str())], "previous").await
+}
+
+#[tauri::command]
+pub async fn api_set_shuffle(client_id: String, device_id: String, state: bool) -> Result<(), String> {
+    let state_str = if state { "true" } else { "false" };
+    player_control(&client_id, reqwest::Method::PUT, "/me/player/shuffle", &[("state", state_str), ("device_id", device_id.as_str())], "shuffle").await
+}
+
+#[tauri::command]
+pub async fn api_set_repeat(client_id: String, device_id: String, state: String) -> Result<(), String> {
+    // state: "off" | "context" | "track"
+    player_control(&client_id, reqwest::Method::PUT, "/me/player/repeat", &[("state", state.as_str()), ("device_id", device_id.as_str())], "repeat").await
+}
+
+// ── Home page endpoints ──
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TopArtists {
+    pub items: Vec<SpotifyArtist>,
+    pub total: i32,
+    pub offset: i32,
+    pub limit: i32,
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TopTracks {
+    pub items: Vec<SpotifyTrack>,
+    pub total: i32,
+    pub offset: i32,
+    pub limit: i32,
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecentlyPlayed {
+    pub items: Vec<PlayHistory>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlayHistory {
+    pub track: SpotifyTrack,
+    pub played_at: String,
+}
+
+#[tauri::command]
+pub async fn api_get_top_artists(
+    client_id: String,
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<TopArtists, String> {
+    let mut params: Vec<(&str, String)> = vec![("time_range", "medium_term".into())];
+    if let Some(l) = limit {
+        params.push(("limit", l.to_string()));
+    }
+    if let Some(o) = offset {
+        params.push(("offset", o.to_string()));
+    }
+    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    get_json(&client_id, "/me/top/artists", &refs).await
+}
+
+#[tauri::command]
+pub async fn api_get_top_tracks(
+    client_id: String,
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<TopTracks, String> {
+    let mut params: Vec<(&str, String)> = vec![("time_range", "medium_term".into())];
+    if let Some(l) = limit {
+        params.push(("limit", l.to_string()));
+    }
+    if let Some(o) = offset {
+        params.push(("offset", o.to_string()));
+    }
+    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    get_json(&client_id, "/me/top/tracks", &refs).await
+}
+
+#[tauri::command]
+pub async fn api_get_recently_played(
+    client_id: String,
+    limit: Option<i32>,
+) -> Result<RecentlyPlayed, String> {
+    let mut params: Vec<(&str, String)> = Vec::new();
+    if let Some(l) = limit {
+        params.push(("limit", l.to_string()));
+    }
+    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    get_json(&client_id, "/me/player/recently-played", &refs).await
 }
 
 #[cfg(test)]
@@ -772,6 +1045,28 @@ mod tests {
     }
 
     #[test]
+    fn test_spotify_track_null_fields_deserialize() {
+        let json = r#"{
+            "id": null,
+            "name": null,
+            "uri": null,
+            "duration_ms": null,
+            "artists": null,
+            "album": null,
+            "disc_number": null,
+            "track_number": null,
+            "explicit": null,
+            "type": "track"
+        }"#;
+        let track: SpotifyTrack = serde_json::from_str(json).unwrap();
+        assert_eq!(track.name, "");
+        assert_eq!(track.uri, "");
+        assert_eq!(track.duration_ms, 0);
+        assert_eq!(track.artists.len(), 0);
+        assert!(track.album.is_none());
+    }
+
+    #[test]
     fn test_search_result_deserialize() {
         let json = r#"{
             "tracks": {
@@ -803,6 +1098,7 @@ mod tests {
 
     #[test]
     fn test_playlist_detail_deserialize() {
+        // Legacy shape: `tracks` paging with wrapped `{added_at, track}` items.
         let json = r#"{
             "id": "pl123",
             "name": "My Playlist",
@@ -810,8 +1106,8 @@ mod tests {
             "images": [],
             "owner": {"id": "user1", "display_name": "User 1"},
             "tracks": {
-                "items": [],
-                "total": 0,
+                "items": [{"added_at": "2024-01-01T00:00:00Z", "track": {"id": "t1", "name": "Track 1", "uri": "spotify:track:t1", "duration_ms": 180000, "artists": [{"id": "a1", "name": "A1", "uri": "spotify:artist:a1"}], "type": "track"}}],
+                "total": 1,
                 "offset": 0,
                 "limit": 20,
                 "next": null
@@ -821,6 +1117,70 @@ mod tests {
         let pl: PlaylistDetail = serde_json::from_str(json).unwrap();
         assert_eq!(pl.name, "My Playlist");
         assert_eq!(pl.owner.id, "user1");
+        assert_eq!(pl.tracks.items.len(), 1);
+        assert_eq!(pl.tracks.items[0].track.as_ref().unwrap().name, "Track 1");
+    }
+
+    #[test]
+    fn test_playlist_detail_migrated_items_alias() {
+        // Feb/Mar 2026 dev-mode shape: `items` paging with per-item `item` field.
+        let json = r#"{
+            "id": "pl123",
+            "name": "Migrated Playlist",
+            "description": null,
+            "images": [],
+            "owner": {"id": "user1", "display_name": "User 1"},
+            "items": {
+                "items": [{"added_at": "2024-01-01T00:00:00Z", "item": {"id": "t1", "name": "Migrated Track", "uri": "spotify:track:t1", "duration_ms": 180000, "artists": [], "type": "track"}}],
+                "total": 1
+            },
+            "type": "playlist"
+        }"#;
+        let pl: PlaylistDetail = serde_json::from_str(json).unwrap();
+        assert_eq!(pl.tracks.total, 1);
+        assert_eq!(pl.tracks.items.len(), 1);
+        assert_eq!(pl.tracks.items[0].track.as_ref().unwrap().name, "Migrated Track");
+    }
+
+    #[test]
+    fn test_playlist_tracks_item_alias() {
+        // GET /playlists/{id}/items uses `item`; ensure both `item` and `track` parse.
+        let json = r#"{
+            "items": [
+                {"added_at": "2024-01-01T00:00:00Z", "item": {"id": "t1", "name": "Via item", "uri": "spotify:track:t1", "duration_ms": 1, "artists": [], "type": "track"}},
+                {"added_at": "2024-01-02T00:00:00Z", "track": {"id": "t2", "name": "Via track", "uri": "spotify:track:t2", "duration_ms": 1, "artists": [], "type": "track"}}
+            ],
+            "total": 2,
+            "offset": 0,
+            "limit": 20,
+            "next": null
+        }"#;
+        let pt: PlaylistTracks = serde_json::from_str(json).unwrap();
+        assert_eq!(pt.items.len(), 2);
+        assert_eq!(pt.items[0].track.as_ref().unwrap().name, "Via item");
+        assert_eq!(pt.items[1].track.as_ref().unwrap().name, "Via track");
+    }
+
+    #[test]
+    fn test_search_skips_null_playlist_items() {
+        // Spotify search can return null entries inside items arrays.
+        let json = r#"{
+            "tracks": null,
+            "artists": null,
+            "albums": null,
+            "playlists": {
+                "items": [
+                    null,
+                    {"id": "p1", "name": "Real PL", "description": null, "collaborative": false, "owner": {"id": "u1", "display_name": "U"}, "images": [], "type": "playlist"},
+                    null
+                ],
+                "total": 3
+            }
+        }"#;
+        let result: SearchResult = serde_json::from_str(json).unwrap();
+        let pls = result.playlists.unwrap();
+        assert_eq!(pls.items.len(), 1);
+        assert_eq!(pls.items[0].name, "Real PL");
     }
 
     #[test]
