@@ -111,6 +111,8 @@ pub struct PlaylistDetail {
     pub description: Option<String>,
     pub images: Vec<SpotifyImage>,
     pub owner: SpotifyOwner,
+    pub public: Option<bool>,
+    pub followers: Option<Followers>,
     // Feb/Mar 2026 dev-mode migration renamed the playlist `tracks` paging
     // object to `items`. Accept either so the track count + inline items
     // populate regardless of which name the API returns.
@@ -924,6 +926,93 @@ pub async fn api_set_shuffle(client_id: String, device_id: String, state: bool) 
 pub async fn api_set_repeat(client_id: String, device_id: String, state: String) -> Result<(), String> {
     // state: "off" | "context" | "track"
     player_control(&client_id, reqwest::Method::PUT, "/me/player/repeat", &[("state", state.as_str()), ("device_id", device_id.as_str())], "repeat").await
+}
+
+// ── Track actions (queue / library / playlist add) ──
+
+#[tauri::command]
+pub async fn api_add_to_queue(client_id: String, uri: String, device_id: Option<String>) -> Result<(), String> {
+    let mut q: Vec<(&str, &str)> = vec![("uri", uri.as_str())];
+    if let Some(d) = &device_id {
+        q.push(("device_id", d.as_str()));
+    }
+    player_control(&client_id, reqwest::Method::POST, "/me/player/queue", &q, "add to queue").await
+}
+
+/// Save items to the user's library (migrated generic endpoint).
+/// `uris` is a comma-separated list of Spotify URIs.
+#[tauri::command]
+pub async fn api_save_to_library(client_id: String, uris: String) -> Result<(), String> {
+    player_control(&client_id, reqwest::Method::PUT, "/me/library", &[("uris", uris.as_str())], "save to library").await
+}
+
+#[tauri::command]
+pub async fn api_remove_from_library(client_id: String, uris: String) -> Result<(), String> {
+    player_control(&client_id, reqwest::Method::DELETE, "/me/library", &[("uris", uris.as_str())], "remove from library").await
+}
+
+/// Returns one bool per URI indicating whether it is saved in the library.
+#[tauri::command]
+pub async fn api_check_library(client_id: String, uris: String) -> Result<Vec<bool>, String> {
+    get_json(&client_id, "/me/library/contains", &[("uris", uris.as_str())]).await
+}
+
+#[tauri::command]
+pub async fn api_add_to_playlist(
+    client_id: String,
+    playlist_id: String,
+    uris: Vec<String>,
+) -> Result<(), String> {
+    let token = tokens::get_valid_access_token(&client_id).await?;
+    let headers = build_headers(&token)?;
+    let client = reqwest::Client::new();
+    let url = format!("{BASE_URL}/playlists/{playlist_id}/items");
+    let body = serde_json::json!({ "uris": uris });
+    let resp = client
+        .post(&url)
+        .headers(headers)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("add to playlist request failed: {e}"))?;
+    if resp.status().is_success() || resp.status().as_u16() == 201 {
+        Ok(())
+    } else {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
+        Err(format!("add to playlist failed ({status}): {body_text}"))
+    }
+}
+
+#[tauri::command]
+pub async fn api_remove_from_playlist(
+    client_id: String,
+    playlist_id: String,
+    uris: Vec<String>,
+) -> Result<(), String> {
+    let token = tokens::get_valid_access_token(&client_id).await?;
+    let headers = build_headers(&token)?;
+    let client = reqwest::Client::new();
+    let url = format!("{BASE_URL}/playlists/{playlist_id}/items");
+    let items: Vec<serde_json::Value> = uris
+        .iter()
+        .map(|u| serde_json::json!({ "uri": u }))
+        .collect();
+    let body = serde_json::json!({ "items": items });
+    let resp = client
+        .delete(&url)
+        .headers(headers)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("remove from playlist request failed: {e}"))?;
+    if resp.status().is_success() || resp.status().as_u16() == 200 {
+        Ok(())
+    } else {
+        let status = resp.status();
+        let body_text = resp.text().await.unwrap_or_else(|_| "(no body)".to_string());
+        Err(format!("remove from playlist failed ({status}): {body_text}"))
+    }
 }
 
 // ── Home page endpoints ──

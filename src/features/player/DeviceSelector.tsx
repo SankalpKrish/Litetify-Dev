@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { apiGetAvailableDevices, apiTransferPlayback } from '../../lib/api';
 
 interface DeviceInfo {
@@ -8,11 +9,15 @@ interface DeviceInfo {
   volume_percent: number | null;
 }
 
+const MENU_WIDTH = 220;
+
 export function DeviceSelector() {
   const [open, setOpen] = useState(false);
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
+  const [pos, setPos] = useState<{ left: number; bottom: number }>({ left: 0, bottom: 0 });
 
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(() => {
     apiGetAvailableDevices()
@@ -24,15 +29,40 @@ export function DeviceSelector() {
     if (open) refresh();
   }, [open, refresh]);
 
+  // Position the portaled menu above the trigger, right-aligned to it and
+  // clamped into the viewport so it never gets clipped by the player bar.
+  useLayoutEffect(() => {
+    if (!open || !btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    const margin = 8;
+    let left = r.right - MENU_WIDTH;
+    if (left < margin) left = margin;
+    if (left + MENU_WIDTH > window.innerWidth - margin) {
+      left = window.innerWidth - margin - MENU_WIDTH;
+    }
+    setPos({ left, bottom: window.innerHeight - r.top + 8 });
+  }, [open]);
+
   useEffect(() => {
+    if (!open) return;
     function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      if (
+        btnRef.current && !btnRef.current.contains(t) &&
+        menuRef.current && !menuRef.current.contains(t)
+      ) {
         setOpen(false);
       }
     }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, []);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', () => setOpen(false));
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
 
   const transfer = useCallback(async (deviceId: string) => {
     try {
@@ -44,9 +74,10 @@ export function DeviceSelector() {
   }, []);
 
   return (
-    <div className="device-selector" ref={ref}>
+    <div className="device-selector">
       <button
-        className="ctrl-btn ctrl-icon-btn"
+        ref={btnRef}
+        className="ctrl-btn"
         onClick={() => setOpen(!open)}
         aria-label="Connect to a device"
         aria-expanded={open}
@@ -59,8 +90,13 @@ export function DeviceSelector() {
           <line x1="12" y1="17" x2="12" y2="21" />
         </svg>
       </button>
-      {open && (
-        <div className="device-dropdown" onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          className="device-dropdown"
+          style={{ left: pos.left, bottom: pos.bottom, width: MENU_WIDTH }}
+          onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+        >
           <div className="device-dropdown-header">Connect to device</div>
           {devices.length === 0 && (
             <div className="device-empty">No devices found</div>
@@ -76,14 +112,15 @@ export function DeviceSelector() {
                 <line x1="8" y1="21" x2="16" y2="21" />
                 <line x1="12" y1="17" x2="12" y2="21" />
               </svg>
-              <span>{d.name}</span>
+              <span className="device-item-name">{d.name}</span>
               {d.is_active && <span className="device-badge">Active</span>}
             </button>
           ))}
           <button className="device-refresh" onClick={refresh}>
             Refresh
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

@@ -79,6 +79,46 @@ a {
   padding-bottom: calc(var(--lt-player-height) + var(--lt-space-xl));
 }
 
+/* ─── Top bar (back / forward nav) ─────────────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--lt-space-md);
+  padding: var(--lt-space-md) var(--lt-space-2xl);
+  flex-shrink: 0;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: var(--lt-space-sm);
+}
+
+.topbar-nav-btn {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--lt-radius-full);
+  background: var(--lt-bg-elevated, rgba(0, 0, 0, 0.4));
+  color: var(--lt-fg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--lt-transition-fast), opacity var(--lt-transition-fast);
+}
+
+.topbar-nav-btn:hover:not(:disabled) {
+  background: var(--lt-bg-highlight);
+}
+
+.topbar-nav-btn:disabled {
+  color: var(--lt-fg-tertiary);
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ─── Sidebar ─────────────────────────────────────────── */
 
 .sidebar {
@@ -94,6 +134,30 @@ a {
 
 .sidebar-header {
   padding: var(--lt-space-xl) var(--lt-space-lg) var(--lt-space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lt-space-sm);
+}
+
+.sidebar-collapse-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--lt-fg-tertiary);
+  border-radius: var(--lt-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color var(--lt-transition-fast), background var(--lt-transition-fast);
+}
+
+.sidebar-collapse-btn:hover {
+  color: var(--lt-fg-primary);
+  background: var(--lt-bg-highlight);
 }
 
 .sidebar-logo {
@@ -334,6 +398,7 @@ a {
 
 .track-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -365,6 +430,121 @@ a {
 
 .track-row:hover {
   background: var(--lt-bg-hover);
+}
+
+/* ─── Track table columns (full layout) ────────────────── */
+
+/* Fixed table layout: explicit widths keep the table inside the viewport and
+   force long text (album/title) to ellipsis rather than overflow. */
+.th-number { width: 40px; text-align: left; }
+.th-title { width: auto; }
+.th-album { width: 28%; }
+.th-date { width: 130px; }
+.th-duration { width: 88px; text-align: right; }
+
+.track-table td {
+  overflow: hidden;
+}
+
+.td-album {
+  overflow: hidden;
+}
+.td-album .track-album {
+  font-size: var(--lt-font-size-base);
+  max-width: 100%;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.td-date {
+  color: var(--lt-fg-tertiary);
+  font-size: var(--lt-font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hide the Date added (then Album) columns as width shrinks. */
+@media (max-width: 860px) {
+  .th-date, .td-date { display: none; }
+}
+@media (max-width: 620px) {
+  .th-album, .td-album { display: none; }
+}
+
+/* Compact view: denser rows, no album art, smaller single-line title. */
+.track-table-compact td {
+  padding-top: var(--lt-space-xs);
+  padding-bottom: var(--lt-space-xs);
+}
+.track-table-compact .track-artist {
+  display: none;
+}
+.track-table-compact .track-name {
+  font-size: var(--lt-font-size-base);
+}
+
+/* ─── "View as" menu ───────────────────────────────────── */
+
+.detail-action-spacer { flex: 1; }
+
+.view-as {
+  position: relative;
+}
+
+.view-as-trigger {
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--lt-space-sm);
+  color: var(--lt-fg-secondary);
+  font: inherit;
+  font-size: var(--lt-font-size-sm);
+  padding: 6px 8px;
+  border-radius: var(--lt-radius-sm);
+  transition: color var(--lt-transition-fast);
+}
+
+.view-as-trigger:hover {
+  color: var(--lt-fg-primary);
+}
+
+.view-as-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 180px;
+  z-index: var(--lt-z-modal, 1000);
+  padding: var(--lt-space-xs);
+  background: var(--lt-bg-elevated, #282828);
+  border: 1px solid var(--lt-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--lt-radius-md);
+  box-shadow: var(--lt-shadow-lg, 0 16px 40px rgba(0, 0, 0, 0.55));
+  user-select: none;
+  animation: context-menu-in 0.08s ease-out;
+}
+
+.view-as-heading {
+  padding: 8px 12px 4px;
+  font-size: var(--lt-font-size-xs);
+  font-weight: var(--lt-font-weight-semibold);
+  color: var(--lt-fg-tertiary);
+}
+
+.view-as-item-label {
+  display: flex;
+  align-items: center;
+  gap: var(--lt-space-md);
+}
+
+.view-as-item-active {
+  color: var(--lt-accent);
 }
 
 .track-row-active {
@@ -483,12 +663,116 @@ a {
 }
 
 .track-duration {
-  width: auto;
-  min-width: 40px;
-  text-align: right;
   color: var(--lt-fg-tertiary);
   font-size: var(--lt-font-size-sm);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* The time + 3-dot button share the cell as a right-aligned inline row, so the
+   menu button stays inside the column instead of overflowing the window. */
+.track-duration-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lt-space-sm);
+}
+
+.track-duration-text {
+  text-align: right;
+}
+
+/* Hover 3-dot menu button — hidden until the row is hovered/focused. */
+.track-menu-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 4px;
+  flex-shrink: 0;
+  color: var(--lt-fg-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--lt-transition-fast), color var(--lt-transition-fast), background var(--lt-transition-fast);
+}
+
+.track-row:hover .track-menu-btn,
+.track-row:focus-within .track-menu-btn {
+  opacity: 1;
+}
+
+.track-menu-btn:hover {
+  color: var(--lt-fg-primary);
+  background: var(--lt-bg-highlight);
+}
+
+/* ─── Context menu (right-click + 3-dot) ─────────────────── */
+
+.context-menu {
+  position: fixed;
+  z-index: var(--lt-z-modal, 1000);
+  min-width: 200px;
+  max-width: 320px;
+  padding: var(--lt-space-xs);
+  background: var(--lt-bg-elevated, #282828);
+  border: 1px solid var(--lt-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--lt-radius-md);
+  box-shadow: var(--lt-shadow-lg, 0 16px 40px rgba(0, 0, 0, 0.55));
+  font-size: var(--lt-font-size-sm);
+  user-select: none;
+  animation: context-menu-in 0.08s ease-out;
+}
+
+@keyframes context-menu-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lt-space-md);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--lt-fg-primary);
+  padding: 10px 12px;
+  border-radius: var(--lt-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+}
+
+.context-menu-item:hover {
+  background: var(--lt-bg-highlight);
+}
+
+.context-menu-item-danger:hover {
+  color: #f15e6c;
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: var(--lt-space-xs) 6px;
+  background: var(--lt-border, rgba(255, 255, 255, 0.08));
+}
+
+.context-menu-chevron {
+  flex-shrink: 0;
+  color: var(--lt-fg-tertiary);
+}
+
+.context-submenu {
+  position: absolute;
+  /* left/top are set dynamically by the SubMenu component (flip + clamp). */
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .track-explicit {
@@ -707,6 +991,26 @@ a {
 
 .play-btn:active {
   transform: scale(0.97);
+}
+
+.detail-menu-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--lt-fg-secondary);
+  border-radius: var(--lt-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--lt-transition-fast), background var(--lt-transition-fast), transform var(--lt-transition-fast);
+}
+
+.detail-menu-btn:hover {
+  color: var(--lt-fg-primary);
+  background: var(--lt-bg-highlight);
+  transform: scale(1.06);
 }
 
 /* ─── Empty state ───────────────────────────────────────── */
@@ -1001,30 +1305,45 @@ a {
   border-top: 1px solid var(--lt-border);
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: var(--lt-player-height);
   align-items: center;
   padding: 0 var(--lt-space-lg);
+  gap: var(--lt-space-md);
   backdrop-filter: blur(6px);
   will-change: opacity;
   z-index: var(--lt-z-player);
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .player-bar-left {
   display: flex;
   align-items: center;
   min-width: 0;
+  overflow: hidden;
 }
 
 .player-bar-center {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--lt-space-xs);
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .player-bar-right {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: var(--lt-space-xs);
+  min-width: 0;
+  /* clip horizontally (prevents resize wrap) but let the device dropdown
+     overflow upward */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .np-info {
@@ -1109,7 +1428,7 @@ a {
   border: none;
   font: inherit;
   cursor: pointer;
-  outline: inherit;
+  outline: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1134,16 +1453,35 @@ a {
   color: var(--lt-accent);
 }
 
+/* Keep focus rings circular (matching the round buttons) and avoid the stray
+   square outline artifact some controls (e.g. the device selector) showed. */
+.ctrl-btn:focus-visible {
+  outline: 2px solid var(--lt-accent);
+  outline-offset: 2px;
+  border-radius: var(--lt-radius-full);
+}
+.ctrl-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
 .ctrl-play {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
   background: var(--lt-fg-primary);
   color: var(--lt-bg-base);
+  transition: transform var(--lt-transition-fast), background var(--lt-transition-fast);
 }
 
 .ctrl-play:hover {
-  background: color-mix(in srgb, var(--lt-fg-primary) 85%, transparent);
+  background: var(--lt-fg-primary);
   color: var(--lt-bg-base);
+  transform: scale(1.06);
+}
+
+.ctrl-play svg {
+  width: 18px;
+  height: 18px;
 }
 
 .progress-area {
@@ -1159,6 +1497,7 @@ a {
   color: var(--lt-fg-secondary);
   font-variant-numeric: tabular-nums;
   min-width: 36px;
+  flex-shrink: 0;
 }
 
 .progress-time:last-child {
@@ -1167,53 +1506,55 @@ a {
 
 .progress-bar {
   flex: 1;
-  height: 4px;
-  background: var(--lt-bg-hover);
-  border-radius: var(--lt-radius-sm);
+  height: 5px;
+  background: #4d4d4d;
+  border-radius: var(--lt-radius-full);
   cursor: pointer;
   position: relative;
-  transition: transform var(--lt-transition-fast), opacity var(--lt-transition-fast);
-}
-
-.progress-bar:hover {
-  transform: scaleY(1.5);
-  transform-origin: center;
-  height: 4px;
 }
 
 .progress-fill {
   height: 100%;
-  background: var(--lt-fg-primary);
-  border-radius: var(--lt-radius-sm);
+  background: var(--lt-accent);
+  border-radius: var(--lt-radius-full);
   transform-origin: left;
   transition: transform 0.1s linear;
-}
-
-.progress-bar:hover .progress-fill {
-  background: var(--lt-accent);
 }
 
 .progress-thumb {
   position: absolute;
   top: 50%;
-  width: 12px;
-  height: 12px;
-  background: var(--lt-fg-primary);
+  width: 13px;
+  height: 13px;
+  background: #ffffff;
   border-radius: var(--lt-radius-full);
   transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: opacity var(--lt-transition-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
-.progress-bar:hover .progress-thumb {
-  opacity: 1;
+/* Scrub tooltip showing the seek target time, above the thumb. */
+.progress-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: var(--lt-font-size-xs);
+  font-weight: var(--lt-font-weight-semibold);
+  padding: 5px 10px;
+  border-radius: var(--lt-radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 1;
 }
 
 .volume-control {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .volume-bar {
@@ -1246,21 +1587,36 @@ a {
 
 .device-selector {
   position: relative;
-  margin-right: var(--lt-space-sm);
+}
+
+/* Compact the device + mute buttons so their icons sit close together near
+   the volume slider (matching the tight grouping in the reference). */
+.device-selector .ctrl-btn,
+.volume-control .ctrl-btn {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
 }
 
 .device-dropdown {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  margin-bottom: var(--lt-space-sm);
+  /* portaled to body; left/bottom/width set inline from the trigger rect */
+  position: fixed;
   min-width: 200px;
+  z-index: calc(var(--lt-z-player) + 10);
   background: var(--lt-bg-elevated);
   border: 1px solid var(--lt-border);
   border-radius: var(--lt-radius-lg);
   padding: var(--lt-space-xs);
   box-shadow: var(--lt-shadow-lg);
-  z-index: var(--lt-z-dropdown);
+  animation: context-menu-in 0.08s ease-out;
+}
+
+.device-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .device-dropdown-header {
@@ -1340,6 +1696,60 @@ a {
   padding: var(--lt-space-sm);
   border-top: 1px solid var(--lt-border);
   margin-top: auto;
+}
+
+/* ─── Collapsed sidebar (icons only) ───────────────────── */
+
+.sidebar-collapsed {
+  width: var(--lt-sidebar-collapsed-width, 72px);
+}
+
+/* When the sidebar is collapsed, the fixed player bar must offset to the
+   narrower width so there's no gap over the sidebar. */
+.app-sidebar-collapsed .player-bar {
+  left: var(--lt-sidebar-collapsed-width, 72px);
+}
+
+/* Hide explicit text spans/sections when collapsed. */
+.sidebar-collapsed .sidebar-logo-text,
+.sidebar-collapsed .dev-badge,
+.sidebar-collapsed .sidebar-section,
+.sidebar-collapsed .sidebar-playlist-name {
+  display: none;
+}
+
+/* Nav + settings labels are bare text nodes; collapse them with font-size:0
+   and restore size for the icons inside. */
+.sidebar-collapsed .sidebar-link,
+.sidebar-collapsed .sidebar-playlist-item {
+  font-size: 0;
+}
+.sidebar-collapsed .sidebar-link-icon {
+  font-size: var(--lt-font-size-base);
+}
+
+/* Center the logo + remaining icons. */
+.sidebar-collapsed .sidebar-header {
+  flex-direction: column;
+  gap: var(--lt-space-md);
+  padding: var(--lt-space-lg) var(--lt-space-sm);
+}
+
+.sidebar-collapsed .sidebar-logo {
+  justify-content: center;
+}
+
+.sidebar-collapsed .sidebar-link,
+.sidebar-collapsed .sidebar-playlist-item {
+  justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Keep pinned thumbnails visible and centered. */
+.sidebar-collapsed .sidebar-playlists {
+  align-items: center;
 }
 
 /* ─── Buttons ──────────────────────────────────────────── */
@@ -1839,7 +2249,8 @@ input:focus:not(:focus-visible) {
     transition: transform var(--lt-transition-normal);
   }
 
-  .player-bar {
+  .player-bar,
+  .app-sidebar-collapsed .player-bar {
     left: 0;
   }
   .main-view {

@@ -102,6 +102,8 @@ export interface PlaylistDetail {
   description: string | null;
   images: SpotifyImage[];
   owner: SpotifyOwner;
+  public: boolean | null;
+  followers: Followers | null;
   tracks: PlaylistDetailTracks;
   type_: string;
 }

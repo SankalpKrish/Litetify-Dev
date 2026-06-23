@@ -1,6 +1,8 @@
 import { useLikedTracks } from '../../lib/queries/useLikedTracks';
 import { formatDuration } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
+import { useContextMenuStore } from '../contextmenu/contextMenuStore';
+import { TrackMenuButton } from '../contextmenu/TrackMenuButton';
 
 interface LikedSongsProps {
   onNavigate: (view: string, params?: Record<string, string>) => void;
@@ -9,6 +11,7 @@ interface LikedSongsProps {
 export function LikedSongs({ onNavigate }: LikedSongsProps) {
   const { data, isLoading, error } = useLikedTracks(50);
   const playTrack = usePlayerStore((s) => s.playTrack);
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
 
   if (isLoading) {
     return (
@@ -95,6 +98,7 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
                 key={track.id ?? `local-${idx}-${track.uri}`}
                 className="track-row"
                 onClick={() => playTrack(track.uri, { uris: queue, offsetUri: track.uri })}
+                onContextMenu={(e) => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, { kind: 'track', track, queueUris: queue }); }}
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { uris: queue, offsetUri: track.uri }); }}
               >
@@ -139,7 +143,10 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
                     </button>
                   )}
                 </td>
-                <td className="track-duration">{formatDuration(track.duration_ms)}</td>
+                <td className="track-duration">
+                  <span className="track-duration-text">{formatDuration(track.duration_ms)}</span>
+                  <TrackMenuButton track={track} queueUris={queue} />
+                </td>
               </tr>
             );
           })}

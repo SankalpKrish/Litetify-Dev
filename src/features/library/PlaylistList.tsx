@@ -1,5 +1,6 @@
 import { usePlaylists } from '../../lib/queries/usePlaylists';
 import { getImage } from '../../lib/utils';
+import { useContextMenuStore } from '../contextmenu/contextMenuStore';
 
 interface PlaylistListProps {
   onNavigate: (view: string, params?: Record<string, string>) => void;
@@ -30,6 +31,7 @@ function CardImage({ src, alt }: { src: string; alt: string }) {
 
 export function PlaylistList({ onNavigate }: PlaylistListProps) {
   const { data, isLoading, error } = usePlaylists(50);
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
 
   if (isLoading) {
     return (
@@ -64,7 +66,7 @@ export function PlaylistList({ onNavigate }: PlaylistListProps) {
       </div>
       <div className="card-grid">
         {data.items.map((pl) => (
-          <div key={pl.id} className="card" onClick={() => onNavigate('playlist', { id: pl.id })} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate('playlist', { id: pl.id }); } }}>
+          <div key={pl.id} className="card" onClick={() => onNavigate('playlist', { id: pl.id })} onContextMenu={(e) => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, { kind: 'playlist', id: pl.id, name: pl.name, uri: `spotify:playlist:${pl.id}`, image: getImage(pl.images, 64) }); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate('playlist', { id: pl.id }); } }}>
             <CardImage src={getImage(pl.images)} alt={pl.name} />
             <div>
               <div className="card-title">{pl.name}</div>

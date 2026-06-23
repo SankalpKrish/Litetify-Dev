@@ -1,7 +1,13 @@
-import { memo, useMemo } from 'react';
-import { usePlaylists } from '../lib/queries/usePlaylists';
+import { memo, useMemo, useState, useEffect } from 'react';
 import { useModsStore } from '../mods';
-import { getImage } from '../lib/utils';
+import { useContextMenuStore } from '../features/contextmenu/contextMenuStore';
+import { usePinsStore } from '../features/pins/pinsStore';
+
+const COLLAPSE_KEY = 'litetify:sidebarCollapsed';
+
+function loadCollapsed(): boolean {
+  try { return localStorage.getItem(COLLAPSE_KEY) === 'true'; } catch { return false; }
+}
 
 const PlaylistThumb = memo(function PlaylistThumb({ src, alt }: { src: string; alt: string }) {
   if (src) {
@@ -62,8 +68,25 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
 });
 
 export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
-  const { data: playlists } = usePlaylists(50);
   const customViews = useModsStore((s) => s.customViews);
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
+  const pins = usePinsStore((s) => s.pins);
+  const [collapsed, setCollapsed] = useState(loadCollapsed);
+
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
+
+  // Reflect collapsed state onto the .app-layout ancestor so siblings (the
+  // fixed now-playing bar) can offset to the collapsed sidebar width.
+  useEffect(() => {
+    const layout = document.querySelector('.app-layout');
+    if (layout) layout.classList.toggle('app-sidebar-collapsed', collapsed);
+  }, [collapsed]);
 
   const sidebarItems = useMemo(() => {
     const items: { id: string; label: string; icon: string }[] = [];
@@ -74,13 +97,25 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
   }, [customViews]);
 
   return (
-    <aside className="sidebar" aria-label="Sidebar">
+    <aside className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`} aria-label="Sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">L</div>
           <span className="sidebar-logo-text">Litetify</span>
           {devMode && <span className="dev-badge">DEV</span>}
         </div>
+        <button
+          className="sidebar-collapse-btn"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand' : 'Collapse'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {collapsed
+              ? <polyline points="9 18 15 12 9 6" />
+              : <polyline points="15 18 9 12 15 6" />}
+          </svg>
+        </button>
       </div>
 
       <nav className="sidebar-nav">
@@ -116,21 +151,28 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
         </>
       )}
 
-      {playlists && playlists.items.length > 0 && (
+      {pins.length > 0 && (
         <>
-          <div className="sidebar-section">Playlists</div>
+          <div className="sidebar-section">Pinned</div>
           <div className="sidebar-playlists">
-            {playlists.items.map((pl) => (
-              <button
-                key={pl.id}
-                className={`sidebar-playlist-item${currentPlaylistId === pl.id ? ' sidebar-playlist-item-active' : ''}`}
-                onClick={() => onNavigate('playlist', { id: pl.id })}
-                aria-label={pl.name}
-              >
-                <PlaylistThumb src={getImage(pl.images, 64)} alt={pl.name} />
-                <span className="sidebar-playlist-name">{pl.name}</span>
-              </button>
-            ))}
+            {pins.map((item) => {
+              const isActive = item.type === 'playlist' && currentPlaylistId === item.id;
+              return (
+                <button
+                  key={item.uri}
+                  className={`sidebar-playlist-item${isActive ? ' sidebar-playlist-item-active' : ''}`}
+                  onClick={() => onNavigate(item.type, { id: item.id })}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openContextMenu(e.clientX, e.clientY, { kind: item.type, id: item.id, name: item.name, uri: item.uri });
+                  }}
+                  aria-label={item.name}
+                >
+                  <PlaylistThumb src={item.image} alt={item.name} />
+                  <span className="sidebar-playlist-name">{item.name}</span>
+                </button>
+              );
+            })}
           </div>
         </>
       )}

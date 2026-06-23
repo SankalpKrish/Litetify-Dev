@@ -24,3 +24,23 @@ export function getImage(images: { url: string; width?: number | null; height?: 
 export function pluralize(count: number, singular: string, plural?: string): string {
   return count === 1 ? singular : (plural ?? `${singular}s`);
 }
+
+/** Spotify-style total duration summary, e.g. "about 5 hr", "1 hr 23 min", "47 min". */
+export function formatTotalDuration(totalMs: number): string {
+  const totalMinutes = Math.round(totalMs / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours >= 1) {
+    if (minutes === 0) return `about ${hours} hr`;
+    return `${hours} hr ${minutes} min`;
+  }
+  return `${totalMinutes} min`;
+}
+
+/** "Date added" style, e.g. "28 Jan 2024". */
+export function formatDateAdded(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}

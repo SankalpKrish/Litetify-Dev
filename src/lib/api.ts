@@ -168,6 +168,30 @@ export async function apiPause(deviceId: string): Promise<void> {
   return req<void>('api_pause', { deviceId });
 }
 
+export async function apiAddToQueue(uri: string, deviceId?: string): Promise<void> {
+  return req<void>('api_add_to_queue', { uri, deviceId: deviceId ?? null });
+}
+
+export async function apiSaveToLibrary(uris: string[]): Promise<void> {
+  return req<void>('api_save_to_library', { uris: uris.join(',') });
+}
+
+export async function apiRemoveFromLibrary(uris: string[]): Promise<void> {
+  return req<void>('api_remove_from_library', { uris: uris.join(',') });
+}
+
+export async function apiCheckLibrary(uris: string[]): Promise<boolean[]> {
+  return req<boolean[]>('api_check_library', { uris: uris.join(',') });
+}
+
+export async function apiAddToPlaylist(playlistId: string, uris: string[]): Promise<void> {
+  return req<void>('api_add_to_playlist', { playlistId, uris });
+}
+
+export async function apiRemoveFromPlaylist(playlistId: string, uris: string[]): Promise<void> {
+  return req<void>('api_remove_from_playlist', { playlistId, uris });
+}
+
 export async function apiGetTopArtists(
   limit?: number,
   offset?: number,

@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearch } from '../../lib/queries/useSearch';
 import { getImage, formatDuration } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
+import { useContextMenuStore } from '../contextmenu/contextMenuStore';
+import { TrackMenuButton } from '../contextmenu/TrackMenuButton';
 import type { SearchType } from '../../lib/types';
 
 type TabType = 'all' | 'track' | 'artist' | 'album' | 'playlist';
@@ -29,6 +31,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
     10,
   );
   const playTrack = usePlayerStore((s) => s.playTrack);
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -130,6 +133,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                       key={track.id ?? `local-${idx}-${track.uri}`}
                       className="track-row"
                       onClick={() => playTrack(track.uri, { uris: queue, offsetUri: track.uri })}
+                      onContextMenu={(e) => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, { kind: 'track', track, queueUris: queue }); }}
                       tabIndex={0}
                       onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { uris: queue, offsetUri: track.uri }); }}
                     >
@@ -174,7 +178,10 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                           </button>
                         )}
                       </td>
-                      <td className="track-duration">{formatDuration(track.duration_ms)}</td>
+                      <td className="track-duration">
+                        <span className="track-duration-text">{formatDuration(track.duration_ms)}</span>
+                        <TrackMenuButton track={track} queueUris={queue} />
+                      </td>
                     </tr>
                   );
                   })}

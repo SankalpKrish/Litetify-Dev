@@ -20,7 +20,9 @@ const SCOPES: &str = "streaming \
     user-top-read \
     user-read-recently-played \
     playlist-read-private \
-    playlist-read-collaborative";
+    playlist-read-collaborative \
+    playlist-modify-public \
+    playlist-modify-private";
 
 pub fn build_auth_url(client_id: &str, challenge: &str, state: &str, port: u16) -> String {
     let redirect_uri = format!("http://127.0.0.1:{port}/callback");

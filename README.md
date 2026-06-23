@@ -2,8 +2,8 @@
 
 A **lightweight, performant, moddable** Spotify **Premium** desktop client.
 
-Built on **Tauri (Rust) + React/TypeScript**. Aims to be smaller and faster than
-the official Electron app, with a Spicetify-style mod system for themes,
+Built on **Tauri v2 (Rust) + React 19/TypeScript**. Aims to be smaller and faster
+than the official Electron app, with a Spicetify-style mod system for themes,
 extensions, and custom apps.
 
 > **Premium required.** Litetify uses Spotify's Web Playback SDK, which only
@@ -13,18 +13,37 @@ extensions, and custom apps.
 
 ## Status
 
-**Core complete.** A production-ready desktop Spotify client with:
+**v0.1.0 pre-release** — core playback, library browsing, search, and personal
+home feed are functional. Still pre-v1: no CI/CD or package signing.
 
-- **Spotify OAuth** via PKCE — login, token refresh, OS keychain storage
-- **Playback** via Spotify Web Playback SDK (default) **or** librespot native engine (opt-in, feature-gated) — play/pause/seek/volume/next/prev with full transport controls
-- **Library browsing** — playlists, liked songs, albums, artists, search
-- **Home/Browse** — featured, new releases, recommendations
-- **Mod system** (Spicetify-parity) — themes (CSS injection), extensions (iframe sandbox), custom apps (tabs) from `mods/` folder with no rebuild
-- **Design system** — 72 CSS custom property tokens, dark theme, Inter type scale, responsive layout
-- **Accessibility** — ARIA labels, keyboard navigation, skip-link, reduced-motion, focus-visible
+- **Spotify OAuth** via PKCE with OS keychain storage, token auto-refresh, and
+  Premium enforcement
+- **Playback** via Spotify Web Playback SDK (default) or librespot native engine
+     (opt-in, feature-gated, needs `cargo build --features librespot`) — full
+  play/pause/seek/volume/next/prev/shuffle/repeat with transport controls
+- **Library browsing** — playlists, liked songs, albums, artists, playlist detail
+- **Home feed** — recently played tracks, top artists, top tracks, personal playlists
+- **Search** — debounced query with tabbed results (tracks / artists / albums / playlists)
+- **Mod system** (Spicetify-parity) — themes (CSS injection), extensions (iframe
+  sandbox), custom apps (sidebar tabs) from `mods/` folder, no rebuild required
+- **Design system** — 72 CSS custom property tokens, dark theme, Inter type scale,
+  responsive layout
+- **Accessibility** — ARIA labels, keyboard navigation, skip-link, reduced-motion,
+  focus-visible, Media Session API
 - **Performance** — lazy-loaded views, code-split chunks, compositor-only animations
-- **Error boundary**, **keyboard shortcuts** (Space, arrows), **Media Session API** (OS media keys)
-- **Hardened sandbox** for extensions — no access to Tauri IPC, `localStorage`, or arbitrary hosts
+- **Error boundary**, **keyboard shortcuts** (Space, arrows), **Media Session API**
+  (OS media keys)
+- **Hardened sandbox** for extensions — `sandbox='allow-scripts'` iframes, no
+  Tauri IPC, no `localStorage`, no arbitrary hosts
+- **Dev mode** — bypass real auth for UI development (stripped before v1)
+
+### Known limitations
+
+- **librespot backend**: `next`/`prev` not supported on the Rust side; `cycleRepeat`
+  is a no-op. Web SDK backend is the fully supported default.
+- **Browse/Explore**: Web API endpoints for new releases, featured playlists, and
+  categories exist in the Rust proxy but have no UI view yet.
+- **Related artists**: API hook exists but is not surfaced in the artist detail view.
 
 ### Mod system
 
@@ -36,7 +55,9 @@ Users can install three types of mods in `mods/`:
 | **Extension** | JS that runs in a sandboxed iframe, interacting only via the `Litetify` API | `mods/examples/skip-to-favorite/` |
 | **Custom App** | Full-page views that appear as new sidebar tabs | `mods/examples/stats-app/` |
 
-Extensions run in a **hardened sandbox** — hidden `<iframe>` with unique origin, no access to Tauri IPC, `localStorage`, or arbitrary network hosts. Full threat model in [`SECURITY.md`](./SECURITY.md).
+Extensions run in a **hardened sandbox** — hidden `<iframe>` with
+`sandbox='allow-scripts'`, no Tauri IPC, `localStorage`, or arbitrary network
+hosts. Full threat model in [`SECURITY.md`](./SECURITY.md).
 
 See [`docs/MODDING.md`](./docs/MODDING.md) for the authoring guide and API reference.
 

@@ -123,6 +123,14 @@ export const ProgressBar = memo(function ProgressBar() {
           className="progress-thumb"
           style={{ left: `${displayFraction * 100}%` }}
         />
+        {scrubbing && (
+          <div
+            className="progress-tooltip"
+            style={{ left: `${displayFraction * 100}%` }}
+          >
+            {fmt(displayPos)}
+          </div>
+        )}
       </div>
       <span className="progress-time">{fmt(durationMs)}</span>
     </div>

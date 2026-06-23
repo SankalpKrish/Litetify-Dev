@@ -72,6 +72,11 @@ export function setToastCallbacks(
   removeToastCallback = remove;
 }
 
+/** App-internal toast helper (used by the context menu and track actions). */
+export function showToast(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
+  toastCallback?.(message, type);
+}
+
 export function emitEvent(event: string, ...args: unknown[]): void {
   const handlers = eventListeners.get(event);
   if (handlers) {

@@ -1,6 +1,11 @@
 import { useAlbum } from '../../lib/queries/useAlbum';
-import { getImage, formatDuration } from '../../lib/utils';
+import { getImage, formatDuration, formatTotalDuration, pluralize } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
+import { useContextMenuStore } from '../contextmenu/contextMenuStore';
+import { TrackMenuButton } from '../contextmenu/TrackMenuButton';
+import { TrackArt } from './TrackArt';
+import { ViewAsMenu } from './ViewAsMenu';
+import { useViewModeStore } from './viewModeStore';
 
 interface AlbumViewProps {
   albumId: string;
@@ -10,6 +15,8 @@ interface AlbumViewProps {
 export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
   const { data: album, isLoading, error } = useAlbum(albumId);
   const playTrack = usePlayerStore((s) => s.playTrack);
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
+  const viewMode = useViewModeStore((s) => s.mode);
 
   if (isLoading) {
     return (
@@ -56,8 +63,8 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
           </div>
           <div className="detail-stats">
             <strong>{album.release_date?.split('-')[0] ?? ''}</strong>
-            {' · '}{album.total_tracks} track{album.total_tracks !== 1 ? 's' : ''}
-            {' · '}{formatDuration(totalDuration)}
+            {' · '}{album.total_tracks} {pluralize(album.total_tracks, 'song')}
+            {totalDuration > 0 && <>{', '}{formatTotalDuration(totalDuration)}</>}
           </div>
         </div>
       </div>
@@ -75,14 +82,33 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
             <polygon points="8,5 19,12 8,19" />
           </svg>
         </button>
+        <button
+          className="detail-menu-btn"
+          aria-label={`More options for ${album.name}`}
+          title="More options"
+          onClick={(e) => {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            openContextMenu(rect.left, rect.bottom + 4, { kind: 'album', id: albumId, name: album.name, uri: album.uri || `spotify:album:${albumId}`, image: getImage(album.images, 64) }, true);
+          }}
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.7" />
+            <circle cx="12" cy="12" r="1.7" />
+            <circle cx="19" cy="12" r="1.7" />
+          </svg>
+        </button>
+        <div className="detail-action-spacer" />
+        <ViewAsMenu />
       </div>
 
-      <table className="track-table">
+      <table className={`track-table track-table-album track-table-${viewMode}`}>
         <thead>
-          <tr>
-            <th style={{ width: 32 }}>#</th>
-            <th>Title</th>
-            <th style={{ width: 60, textAlign: 'right' }}>Duration</th>
+          <tr className="track-head-row">
+            <th className="th-number">#</th>
+            <th className="th-title">Title</th>
+            <th className="th-duration" aria-label="Duration">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15 14" /></svg>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -91,6 +117,7 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
               key={track.id ?? `local-${idx}-${track.uri}`}
               className="track-row"
               onClick={() => playTrack(track.uri, { contextUri: album.uri || `spotify:album:${albumId}`, offsetUri: track.uri })}
+              onContextMenu={(e) => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, { kind: 'track', track, contextUri: album.uri || `spotify:album:${albumId}` }); }}
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter') playTrack(track.uri, { contextUri: album.uri || `spotify:album:${albumId}`, offsetUri: track.uri }); }}
             >
@@ -99,14 +126,35 @@ export function AlbumView({ albumId, onNavigate }: AlbumViewProps) {
                   <span className="track-number-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="8,5 19,12 8,19" /></svg></span>
               </td>
               <td>
-                <div className="track-info">
-                  <div className="track-name">
-                    {track.explicit && <span className="track-explicit">E</span>}
-                    {track.name}
+                <div className="track-cell">
+                  {viewMode === 'list' && <TrackArt src={getImage(album.images, 64)} />}
+                  <div className="track-info">
+                    <div className="track-name">
+                      {track.explicit && <span className="track-explicit">E</span>}
+                      {track.name}
+                    </div>
+                    <div className="track-artist">
+                      {track.artists.length > 0 ? track.artists.map((a, i) => (
+                        <span key={a.id}>
+                          {i > 0 && ', '}
+                          <button
+                            className="track-artist-link"
+                            onClick={(e) => { e.stopPropagation(); onNavigate('artist', { id: a.id }); }}
+                          >
+                            {a.name}
+                          </button>
+                        </span>
+                      )) : null}
+                    </div>
                   </div>
                 </div>
               </td>
-              <td className="track-duration">{formatDuration(track.duration_ms)}</td>
+              <td className="track-duration">
+                <span className="track-duration-cell">
+                  <span className="track-duration-text">{formatDuration(track.duration_ms)}</span>
+                  <TrackMenuButton track={track} contextUri={album.uri || `spotify:album:${albumId}`} />
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>

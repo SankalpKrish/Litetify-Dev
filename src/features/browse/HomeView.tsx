@@ -1,5 +1,6 @@
 import { useTopArtists, useTopTracks, useRecentlyPlayed, useHomePlaylists } from '../../lib/queries/useHome';
 import { getImage } from '../../lib/utils';
+import { useContextMenuStore } from '../contextmenu/contextMenuStore';
 
 interface HomeViewProps {
   onNavigate: (view: string, params?: Record<string, string>) => void;
@@ -45,6 +46,7 @@ function CardImage({ src, alt }: { src: string; alt: string }) {
 }
 
 export function HomeView({ onNavigate }: HomeViewProps) {
+  const openContextMenu = useContextMenuStore((s) => s.openMenu);
   const { data: topArtists, isLoading: taLoading } = useTopArtists(6);
   const { data: topTracks, isLoading: ttLoading } = useTopTracks(6);
   // Fetch extra recently-played: the endpoint returns one entry per play event,
@@ -144,15 +146,25 @@ export function HomeView({ onNavigate }: HomeViewProps) {
             <h2 className="section-title">Your top tracks</h2>
           </div>
           <div className="card-grid">
-            {topTracks.items.slice(0, 6).map((track) => (
-              <div key={track.id ?? track.uri} className="card" style={{ cursor: 'default' }}>
-                <CardImage src={getImage(track.album?.images ?? null)} alt={track.album?.name ?? ''} />
-                <div>
-                  <div className="card-title">{track.name}</div>
-                  <div className="card-subtitle">{track.artists.map(a => a.name).join(', ')}</div>
+            {topTracks.items.slice(0, 6).map((track) => {
+              const albumId = track.album?.id;
+              return (
+                <div
+                  key={track.id ?? track.uri}
+                  className="card"
+                  onClick={() => { if (albumId) onNavigate('album', { id: albumId }); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && albumId) { e.preventDefault(); onNavigate('album', { id: albumId }); } }}
+                >
+                  <CardImage src={getImage(track.album?.images ?? null)} alt={track.album?.name ?? ''} />
+                  <div>
+                    <div className="card-title">{track.name}</div>
+                    <div className="card-subtitle">{track.artists.map(a => a.name).join(', ')}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -175,6 +187,7 @@ export function HomeView({ onNavigate }: HomeViewProps) {
                 key={pl.id}
                 className="card"
                 onClick={() => onNavigate('playlist', { id: pl.id })}
+                onContextMenu={(e) => { e.preventDefault(); openContextMenu(e.clientX, e.clientY, { kind: 'playlist', id: pl.id, name: pl.name, uri: `spotify:playlist:${pl.id}`, image: getImage(pl.images, 64) }); }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate('playlist', { id: pl.id }); } }}

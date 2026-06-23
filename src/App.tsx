@@ -5,6 +5,7 @@ import { LoginScreen } from './features/auth/LoginScreen';
 import { NowPlayingBar } from './features/player/NowPlayingBar';
 import { PlayerInitializer } from './features/player/PlayerInitializer';
 import { Sidebar } from './app/Sidebar';
+import { ContextMenu, setContextMenuNavigate } from './features/contextmenu/ContextMenu';
 import { ErrorBoundary } from './lib/ErrorBoundary';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { initMods, useModsStore } from './mods';
@@ -44,7 +45,16 @@ function AppShell(): React.JSX.Element {
     'loading' | 'authenticated' | 'unauthenticated'
   >(() => 'loading');
 
-  const [currentView, setCurrentView] = useState<View>({ name: 'home' });
+  // View navigation history: `entries[index]` is the current view. Navigating
+  // pushes (truncating any forward entries); back/forward move the index.
+  // Kept in one state object so updates stay atomic.
+  const [nav, setNav] = useState<{ entries: View[]; index: number }>({
+    entries: [{ name: 'home' }],
+    index: 0,
+  });
+  const currentView = nav.entries[nav.index];
+  const canGoBack = nav.index > 0;
+  const canGoForward = nav.index < nav.entries.length - 1;
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const customViews = useModsStore((s) => s.customViews);
 
@@ -65,6 +75,18 @@ function AppShell(): React.JSX.Element {
       initMods().catch((err) => console.error('[mods] init failed:', err));
     }
   }, [authStatus]);
+
+  // Disable the native right-click menu app-wide so our custom menu is the only one.
+  useEffect(() => {
+    const onContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Allow native menu inside text inputs/textareas (copy/paste etc.).
+      if (target.closest('input, textarea, [contenteditable="true"]')) return;
+      e.preventDefault();
+    };
+    document.addEventListener('contextmenu', onContextMenu);
+    return () => document.removeEventListener('contextmenu', onContextMenu);
+  }, []);
 
   useEffect(() => {
     setToastCallbacks(
@@ -91,34 +113,41 @@ function AppShell(): React.JSX.Element {
     setAuthStatus('unauthenticated');
   }, []);
 
+  const pushView = useCallback((next: View) => {
+    setNav((prev) => {
+      const truncated = prev.entries.slice(0, prev.index + 1);
+      const cur = truncated[truncated.length - 1];
+      // Don't push a duplicate of the current view.
+      if (cur && JSON.stringify(cur) === JSON.stringify(next)) return prev;
+      const entries = [...truncated, next];
+      return { entries, index: entries.length - 1 };
+    });
+  }, []);
+
+  const goBack = useCallback(() => {
+    setNav((prev) => (prev.index > 0 ? { ...prev, index: prev.index - 1 } : prev));
+  }, []);
+
+  const goForward = useCallback(() => {
+    setNav((prev) => (prev.index < prev.entries.length - 1 ? { ...prev, index: prev.index + 1 } : prev));
+  }, []);
+
   const handleNavigate = useCallback((view: string, params?: Record<string, string>) => {
     switch (view) {
-      case 'home':
-        setCurrentView({ name: 'home' });
-        break;
-      case 'search':
-        setCurrentView({ name: 'search' });
-        break;
-      case 'library':
-        setCurrentView({ name: 'library' });
-        break;
-      case 'settings':
-        setCurrentView({ name: 'settings' });
-        break;
-      case 'playlist':
-        setCurrentView({ name: 'playlist', id: params?.id ?? '' });
-        break;
-      case 'album':
-        setCurrentView({ name: 'album', id: params?.id ?? '' });
-        break;
-      case 'artist':
-        setCurrentView({ name: 'artist', id: params?.id ?? '' });
-        break;
-      case 'mod':
-        setCurrentView({ name: 'mod', modId: params?.modId ?? '' });
-        break;
+      case 'home': pushView({ name: 'home' }); break;
+      case 'search': pushView({ name: 'search' }); break;
+      case 'library': pushView({ name: 'library' }); break;
+      case 'settings': pushView({ name: 'settings' }); break;
+      case 'playlist': pushView({ name: 'playlist', id: params?.id ?? '' }); break;
+      case 'album': pushView({ name: 'album', id: params?.id ?? '' }); break;
+      case 'artist': pushView({ name: 'artist', id: params?.id ?? '' }); break;
+      case 'mod': pushView({ name: 'mod', modId: params?.modId ?? '' }); break;
     }
   }, []);
+
+  useEffect(() => {
+    setContextMenuNavigate(handleNavigate);
+  }, [handleNavigate]);
 
   useKeyboardShortcuts();
 
@@ -155,6 +184,28 @@ function AppShell(): React.JSX.Element {
         onNavigate={handleNavigate}
       />
       <div className="app-main">
+        <div className="topbar">
+          <div className="topbar-nav">
+            <button
+              className="topbar-nav-btn"
+              onClick={goBack}
+              disabled={!canGoBack}
+              aria-label="Go back"
+              title="Go back"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+            <button
+              className="topbar-nav-btn"
+              onClick={goForward}
+              disabled={!canGoForward}
+              aria-label="Go forward"
+              title="Go forward"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          </div>
+        </div>
         <main className="main-view" id="main-content">
           <Suspense fallback={<div className="empty-state"><div className="auth-spinner" /></div>}>
             {currentView.name === 'home' && <HomeView onNavigate={handleNavigate} />}
@@ -190,6 +241,7 @@ function AppShell(): React.JSX.Element {
           onClose={() => setToast(null)}
         />
       )}
+      <ContextMenu />
     </div>
     </ErrorBoundary>
   );
