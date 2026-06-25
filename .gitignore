@@ -42,6 +42,9 @@ Thumbs.db
 src-tauri/gen/
 src-tauri/WixTools/
 
+# Planning / workflow artifacts
+.planning/
+
 # Misc
 *.local
 coverage/
