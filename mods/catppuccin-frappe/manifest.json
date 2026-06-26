@@ -1,0 +1,9 @@
+{
+  "name": "Catppuccin Frappé",
+  "version": "1.0.0",
+  "type": "theme",
+  "entry": "theme.css",
+  "description": "Soothing pastel theme for Litetify — Frappé flavor (mid-dark). Based on Catppuccin (https://github.com/catppuccin/catppuccin).",
+  "author": "Catppuccin (adapted for Litetify)",
+  "litetifyApiVersion": "1.0.0"
+}

@@ -1,0 +1,66 @@
+/*
+ * Catppuccin Latte — Litetify Theme
+ * Palette: https://github.com/catppuccin/catppuccin
+ * License: MIT
+ */
+
+:root {
+  /* ── Catppuccin Latte accent palette ── */
+  --ctp-rosewater: #dc8a78;
+  --ctp-flamingo:  #dd7878;
+  --ctp-pink:      #ea76cb;
+  --ctp-mauve:     #8839ef;
+  --ctp-red:       #d20f39;
+  --ctp-maroon:    #e64553;
+  --ctp-peach:     #fe640b;
+  --ctp-yellow:    #df8e1d;
+  --ctp-green:     #40a02b;
+  --ctp-teal:      #179299;
+  --ctp-sky:       #04a5e5;
+  --ctp-sapphire:  #209fb5;
+  --ctp-blue:      #1e66f5;
+  --ctp-lavender:  #7287fd;
+
+  /* ── Catppuccin Latte neutral palette ── */
+  --ctp-text:      #4c4f69;
+  --ctp-subtext1:  #5c5f77;
+  --ctp-subtext0:  #6c6f85;
+  --ctp-overlay2:  #7c7f93;
+  --ctp-overlay1:  #8c8fa1;
+  --ctp-overlay0:  #9ca0b0;
+  --ctp-surface2:  #acb0be;
+  --ctp-surface1:  #bcc0cc;
+  --ctp-surface0:  #ccd0da;
+  --ctp-base:      #eff1f5;
+  --ctp-mantle:    #e6e9ef;
+  --ctp-crust:     #dce0e8;
+
+  /* ── Litetify tokens ── */
+
+  /* Backgrounds */
+  --lt-bg-base:      var(--ctp-base);
+  --lt-bg-elevated:  var(--ctp-surface0);
+  --lt-bg-highlight: var(--ctp-surface1);
+  --lt-bg-hover:     rgba(172, 176, 190, 0.35);  /* Surface2 @ ~35% */
+  --lt-bg-active:    rgba(172, 176, 190, 0.55);   /* Surface2 @ ~55% */
+  --lt-bg-sidebar:   var(--ctp-mantle);
+
+  /* Foregrounds */
+  --lt-fg-primary:   var(--ctp-text);
+  --lt-fg-secondary: var(--ctp-subtext1);
+  --lt-fg-tertiary:  var(--ctp-overlay2);
+
+  /* Accent (Blue) */
+  --lt-accent:       var(--ctp-blue);
+  --lt-accent-hover: #4c8af7;                    /* Blue lighter */
+  --lt-accent-subtle: rgba(30, 102, 245, 0.15);  /* Blue @ 15% */
+
+  /* Borders */
+  --lt-border:       rgba(204, 208, 218, 0.6);   /* Surface0 @ 60% */
+  --lt-border-hover: rgba(188, 192, 204, 0.6);   /* Surface1 @ 60% */
+
+  /* Semantic */
+  --lt-error:        var(--ctp-red);
+  --lt-error-bg:     rgba(210, 15, 57, 0.1);     /* Red @ 10% */
+  --lt-on-accent:    var(--ctp-base);
+}
