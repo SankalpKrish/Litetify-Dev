@@ -9,7 +9,7 @@ export interface RawModEntry {
   path: string;
   name: string;
   version: string;
-  mod_type: 'Theme' | 'Extension' | 'App';
+  mod_type: string;
   entry: string;
   description: string | null;
   author: string | null;
@@ -18,11 +18,12 @@ export interface RawModEntry {
   error: string | null;
 }
 
-function mapType(t: 'Theme' | 'Extension' | 'App'): 'theme' | 'extension' | 'app' {
-  switch (t) {
-    case 'Theme': return 'theme';
-    case 'Extension': return 'extension';
-    case 'App': return 'app';
+function mapType(t: string): 'theme' | 'extension' | 'app' {
+  switch (t.toLowerCase()) {
+    case 'theme': return 'theme';
+    case 'extension': return 'extension';
+    case 'app': return 'app';
+    default: return 'extension';
   }
 }
 

@@ -11,6 +11,7 @@ pub struct ModManifest {
     pub entry: String,
     pub description: Option<String>,
     pub author: Option<String>,
+    #[serde(rename = "litetifyApiVersion")]
     pub litetify_api_version: String,
     pub permissions: Option<Vec<String>>,
 }
@@ -135,33 +136,82 @@ pub fn scan_mods() -> Vec<ModEntry> {
 }
 
 pub fn read_mod_file(mod_path: &str, file_path: &str) -> Result<String, String> {
-    let base = mods_path().canonicalize().map_err(|_| "Invalid mods directory".to_string())?;
-    let mod_dir = PathBuf::from(mod_path).canonicalize().map_err(|e| format!("Invalid mod path: {}", e))?;
-    if !mod_dir.starts_with(&base) {
-        return Err("Access denied: mod path outside mods directory".into());
+    let base = mods_path();
+    eprintln!("[mods] read_mod_file: base={:?}, mod_path={:?}, file_path={:?}", base, mod_path, file_path);
+    
+    // Normalize path separators for comparison
+    let base_str = base.to_string_lossy().replace('\\', "/");
+    let mod_str = mod_path.replace('\\', "/");
+    
+    if !mod_str.starts_with(&base_str) {
+        return Err(format!("Access denied: mod path '{}' is not inside mods directory '{}'", mod_path, base.display()));
     }
-    let requested = mod_dir.join(file_path);
-    let canonical = requested.canonicalize().map_err(|e| format!("Cannot access file: {}", e))?;
-    if !canonical.starts_with(&mod_dir) {
+    
+    // The full path is just mod_path + file_path (both are real paths from the filesystem)
+    let entry_file = PathBuf::from(mod_path).join(file_path);
+    eprintln!("[mods] read_mod_file: entry_file={:?}, exists={}", entry_file, entry_file.exists());
+    
+    if !entry_file.exists() {
+        return Err(format!("Entry file '{}' not found in {}", file_path, mod_path));
+    }
+    
+    // Security: ensure the resolved path doesn't escape the mod directory
+    let entry_str = entry_file.to_string_lossy().replace('\\', "/");
+    if !entry_str.starts_with(&mod_str) {
         return Err("Path traversal denied".into());
     }
-    fs::read_to_string(&canonical).map_err(|e| format!("Failed to read {}: {}", canonical.display(), e))
+    
+    fs::read_to_string(&entry_file).map_err(|e| format!("Failed to read {}: {}", entry_file.display(), e))
 }
 
 pub fn mods_path() -> PathBuf {
-    let exe = std::env::current_exe().unwrap_or_else(|e| {
-        eprintln!("Warning: cannot resolve executable path: {}", e);
-        PathBuf::new()
-    });
-    let exe_dir = exe.parent().unwrap_or(std::path::Path::new("."));
-    let path = exe_dir.to_path_buf();
-    // during development, look for mods/ next to source
-    if cfg!(debug_assertions) {
-        let cwd = std::env::current_dir().unwrap_or_default();
-        let dev_mods = cwd.join("mods");
-        if dev_mods.exists() {
-            return dev_mods;
+    // 1. Environment variable override
+    if let Ok(env_path) = std::env::var("LITETIFY_MODS_DIR") {
+        let p = PathBuf::from(&env_path);
+        if p.exists() {
+            return p;
         }
     }
-    path.join("mods")
+
+    let exe = std::env::current_exe().unwrap_or_else(|_| PathBuf::new());
+    let exe_dir = exe.parent().unwrap_or(std::path::Path::new(".")).to_path_buf();
+
+    let cwd = std::env::current_dir().unwrap_or_default();
+    let cwd_mods = cwd.join("mods");
+
+    // 2. CWD (project root during `tauri dev`)
+    if cwd_mods.exists() {
+        return cwd_mods;
+    }
+
+    // 3. Walk up from executable directory looking for mods/ with actual content
+    let mut search = exe_dir.clone();
+    for _ in 0..15 {
+        let candidate = search.join("mods");
+        if candidate.exists() && has_manifests(&candidate) {
+            return candidate;
+        }
+        if !search.pop() {
+            break;
+        }
+    }
+
+    // 4. Fallback next to executable
+    let fallback = exe_dir.join("mods");
+    if fallback.exists() && has_manifests(&fallback) {
+        return fallback;
+    }
+
+    // 5. Last resort: create and return CWD/mods
+    cwd_mods
+}
+
+fn has_manifests(dir: &PathBuf) -> bool {
+    fs::read_dir(dir)
+        .map(|entries| {
+            entries.filter_map(|e| e.ok()).any(|e| {
+                e.path().is_dir() && e.path().join("manifest.json").exists()
+            })
+        })
+        .unwrap_or(false)
 }

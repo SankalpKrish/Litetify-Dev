@@ -20,6 +20,11 @@ fn read_mod_file(mod_path: String, file_path: String) -> Result<String, String> 
     mods::read_mod_file(&mod_path, &file_path)
 }
 
+#[tauri::command]
+fn get_mods_path() -> String {
+    mods::mods_path().to_string_lossy().to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -28,6 +33,7 @@ pub fn run() {
             ping,
             scan_mods,
             read_mod_file,
+            get_mods_path,
             auth::login,
             auth::logout,
             auth::check_auth,

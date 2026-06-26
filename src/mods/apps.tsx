@@ -29,9 +29,11 @@ function filterApiByPermissions(api: Record<string, unknown>, permissions: strin
 }
 
 export async function loadCustomApp(mod: { manifest: { type: string; name: string; entry: string; permissions?: string[] }; path: string }): Promise<void> {
-  if (mod.manifest.type !== 'app') return;
+  console.log('[mods] loadCustomApp called:', mod.path, mod.manifest.type, mod.manifest.entry);
+  if (mod.manifest.type !== 'app') { console.log('[mods] skipping, not app type'); return; }
 
   const code = await readModFile(mod.path, mod.manifest.entry);
+  console.log('[mods] readModFile succeeded, code length:', code.length);
   const modId = mod.manifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
   const api = filterApiByPermissions(createLitetifyAPI(modId) as unknown as Record<string, unknown>, mod.manifest.permissions || []);
 

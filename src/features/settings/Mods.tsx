@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useModsStore, scanMods, persistEnabledState, persistActiveThemeState, activateTheme } from '../../mods';
+import { invoke } from '@tauri-apps/api/core';
+import { openPath } from '@tauri-apps/plugin-opener';
+import { useModsStore, scanMods, persistEnabledState, persistActiveThemeState, activateTheme, loadCustomApp, loadTheme } from '../../mods';
+import type { ModEntry } from '../../mods/manifest';
 
 export function ModsSettings() {
   const registry = useModsStore((s) => s.registry);
   const activeTheme = useModsStore((s) => s.activeTheme);
 
   useEffect(() => {
-    scanMods().then((mods) => {
-      useModsStore.getState().setRegistry(mods);
-    });
+    scanMods()
+      .then((mods) => {
+        useModsStore.getState().setRegistry(mods);
+      })
+      .catch((err) => console.error('[mods] scanMods failed:', err));
   }, []);
 
   const themes = useMemo(() => registry.filter((m) => m.manifest.type === 'theme' && !m.error), [registry]);
@@ -16,9 +21,37 @@ export function ModsSettings() {
   const apps = useMemo(() => registry.filter((m) => m.manifest.type === 'app' && !m.error), [registry]);
   const withErrors = useMemo(() => registry.filter((m) => m.error), [registry]);
 
-  const handleToggle = useCallback((path: string) => {
-    useModsStore.getState().toggleEnabled(path);
+  const handleToggle = useCallback(async (mod: ModEntry) => {
+    const store = useModsStore.getState();
+    store.toggleEnabled(mod.path);
     persistEnabledState();
+
+    const nowEnabled = !mod.enabled;
+    console.log(`[mods] toggle ${mod.manifest.name}: enabled=${nowEnabled}, path=${mod.path}, type=${mod.manifest.type}`);
+    try {
+      if (nowEnabled) {
+        switch (mod.manifest.type) {
+          case 'app':
+            await loadCustomApp(mod);
+            console.log(`[mods] loadCustomApp succeeded for ${mod.manifest.name}`);
+            break;
+          case 'theme':
+            await loadTheme(mod);
+            break;
+          case 'extension':
+            // extensions load via loadEnabledMods on restart
+            break;
+        }
+      } else {
+        // Unload disabled app by unregistering its custom view
+        if (mod.manifest.type === 'app') {
+          const modId = mod.manifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+          store.unregisterCustomView(modId);
+        }
+      }
+    } catch (err) {
+      console.error(`[mods] Failed to ${nowEnabled ? 'load' : 'unload'} ${mod.manifest.name}:`, err);
+    }
   }, []);
 
   const handleThemeChange = useCallback(
@@ -30,8 +63,21 @@ export function ModsSettings() {
     [registry],
   );
 
-  const handleOpenModsFolder = useCallback(() => {
-    window.open('mods/', '_blank');
+  const handleOpenModsFolder = useCallback(async () => {
+    try {
+      const modsPath = await invoke<string>('get_mods_path');
+      await openPath(modsPath);
+    } catch (err) {
+      console.error('[mods] Failed to open mods folder:', err);
+    }
+  }, []);
+
+  const handleOpenModFolder = useCallback(async (mod: ModEntry) => {
+    try {
+      await openPath(mod.path);
+    } catch (err) {
+      console.error('[mods] Failed to open mod folder:', err);
+    }
   }, []);
 
   return (
@@ -57,6 +103,13 @@ export function ModsSettings() {
                 </div>
                 <div className="mod-item-actions">
                   <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => handleOpenModFolder(mod)}
+                    title="Open in file explorer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  </button>
+                  <button
                     className={`btn btn-sm ${activeTheme === mod.manifest.name ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() =>
                       handleThemeChange(activeTheme === mod.manifest.name ? null : mod.manifest.name)
@@ -65,11 +118,11 @@ export function ModsSettings() {
                   >
                     {activeTheme === mod.manifest.name ? 'Active' : 'Apply'}
                   </button>
-                    <label className="toggle-label">
+                  <label className="toggle-label">
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={() => handleToggle(mod.path)}
+                      onChange={() => handleToggle(mod)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />
@@ -99,11 +152,18 @@ export function ModsSettings() {
                   )}
                 </div>
                 <div className="mod-item-actions">
+                  <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => handleOpenModFolder(mod)}
+                    title="Open in file explorer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  </button>
                   <label className="toggle-label">
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={() => handleToggle(mod.path)}
+                      onChange={() => handleToggle(mod)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />
@@ -128,11 +188,18 @@ export function ModsSettings() {
                   {mod.manifest.author && <span className="mod-item-author">by {mod.manifest.author}</span>}
                 </div>
                 <div className="mod-item-actions">
+                  <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => handleOpenModFolder(mod)}
+                    title="Open in file explorer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  </button>
                   <label className="toggle-label">
                     <input
                       type="checkbox"
                       checked={mod.enabled}
-                      onChange={() => handleToggle(mod.path)}
+                      onChange={() => handleToggle(mod)}
                       aria-label={"Enable " + mod.manifest.name}
                     />
                     <span className="toggle-slider" />
@@ -161,6 +228,15 @@ export function ModsSettings() {
                 <div className="mod-item-info">
                   <strong>{mod.manifest.name || mod.path.split(/[\\/]/).pop()}</strong>
                   <p className="mod-item-error-msg">{mod.error}</p>
+                </div>
+                <div className="mod-item-actions">
+                  <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => handleOpenModFolder(mod)}
+                    title="Open in file explorer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  </button>
                 </div>
               </div>
             ))}

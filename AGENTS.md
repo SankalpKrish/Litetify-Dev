@@ -1,3 +1,7 @@
+# General Rules
+
+- **Advisor escalation**: If a problem is not solved after 3 passes (with or without human interaction), call `/advisor` before attempting more passes.
+
 # Spotify Web API Rules
 
 Follow these rules when building with the Spotify Web API:
