@@ -9,9 +9,9 @@ colors:
   fg-primary: "#f5f5f7"
   fg-secondary: "#9b9ba3"
   fg-tertiary: "#6b6b73"
-  accent: "#1db954"
-  accent-hover: "#1ed760"
-  accent-subtle: "rgba(29, 185, 84, 0.15)"
+  accent: "#834F9E"
+  accent-hover: "#9B6BB5"
+  accent-subtle: "rgba(131, 79, 158, 0.15)"
   border: "rgba(255, 255, 255, 0.06)"
   border-hover: "rgba(255, 255, 255, 0.12)"
   error: "#e74c3c"
@@ -93,23 +93,23 @@ components:
 
 **Creative North Star: "The Listening Lounge"**
 
-Litetify is a dark, refined desktop music player that puts the album art and the music first. The interface recedes into deep charcoal backgrounds, letting vibrant cover art and the signature Spotify green accent command attention. Every surface is purposeful: the sidebar holds navigation, the main area surfaces content, the player bar sits at the bottom as a persistent control layer. Nothing fights the music.
+Litetify is a dark, refined desktop music player that puts the album art and the music first. The interface recedes into deep charcoal backgrounds, letting vibrant cover art and the signature Twilight Purple accent command attention. Every surface is purposeful: the sidebar holds navigation, the main area surfaces content, the player bar sits at the bottom as a persistent control layer. Nothing fights the music.
 
 The system rejects the bloat of the official Spotify client (crowded layouts, heavy chrome, inconsistent spacing) and the anonymity of generic Electron apps (bland corporate gray, no character, no soul). It aims for the warmth of a premium listening bar: dim lighting, focused attention, tactile controls that respond to every touch.
 
 **Key Characteristics:**
 - Dark-only foundation. Deep charcoal neutrals tinted toward cool blue-black at chroma 0.005.
-- One accent voice. Spotify green (oklch(69% 0.18 145)) used on ≤10% of any surface. Its rarity is the point.
+- One accent voice. Twilight Purple (#834F9E / oklch(48% 0.14 300)) used on ≤10% of any surface. Its rarity is the point.
 - Flat surfaces with responsive shadows. Depth through background layering, not drop shadows at rest. Shadows appear on hover and interaction.
 - Inter at every weight. A single sans family doing the full range from label to display. Hierarchy through weight (400/500/600/700) and scale (0.78rem to 2.5rem).
 - Tactile feedback. Hover states, subtle lifts, and color transitions are immediate and felt. The UI is alive but never frantic.
 
 ## 2. Colors: The Listening Lounge Palette
 
-A restrained palette built around deep charcoal neutrals and a single green accent. The backgrounds read as "dim room" rather than "pitch black", letting album art provide the color.
+A restrained palette built around deep charcoal neutrals and a single purple accent. The backgrounds read as "dim room" rather than "pitch black", letting album art provide the color.
 
 ### Primary
-- **Spotify Green** (#1db954 / oklch(69% 0.18 145)): The sole accent. Buttons, active states, links, progress indicators. Never used decoratively. Every green pixel earns its place.
+- **Twilight Purple** (#834F9E / oklch(48% 0.14 300)): The sole accent. Buttons, active states, links, progress indicators. Never used decoratively. Every purple pixel earns its place.
 
 ### Neutral
 - **Pitch Slate** (#0a0a0c / oklch(10% 0.005 280)): Sidebar background. The darkest surface, anchoring the left edge.
@@ -126,7 +126,7 @@ A restrained palette built around deep charcoal neutrals and a single green acce
 - **Alert Red** (#e74c3c): Errors, destructive actions, warning indicators. Used sparingly.
 
 ### Named Rules
-**The One Accent Rule.** Spotify green covers ≤10% of any screen. Its rarity gives it weight. If green is everywhere, it means nothing.
+**The One Accent Rule.** Twilight Purple covers ≤10% of any screen. Its rarity gives it weight. If purple is everywhere, it means nothing.
 
 **The Room Is Dark Rule.** Text on dark backgrounds must clear WCAG contrast. Primary text at #f5f5f7 on #0d0d0f (contrast ~16:1) ensures readability. Secondary at #9b9ba3 (~7:1) stays legible. Never go below 4.5:1 for body text.
 
@@ -164,13 +164,13 @@ Shadows appear only as a response to interaction. They are small and warm.
 
 ### Buttons
 - **Shape:** Fully rounded (9999px). Pill-shaped buttons throughout.
-- **Primary** (#1db954 bg, #000 text, 12px 32px padding): High-emphasis actions. Play buttons, auth flows. Hover brightens to #1ed760. Transition 0.2s, transform translateY(-1px) on hover.
+- **Primary** (#834F9E bg, #fff text, 12px 32px padding): High-emphasis actions. Play buttons, auth flows. Hover brightens to #9B6BB5. Transition 0.2s, transform translateY(-1px) on hover.
 - **Secondary** (#1a1a1e bg, #f5f5f7 text, 12px 32px padding): Neutral actions. "Add to Playlist", "Follow". Hover shifts border to Dim White.
 - **Ghost / Tertiary** (transparent bg, #f5f5f7 text): Low-emphasis actions. Icon buttons, "See All" links. Hover adds #1a1a1e background.
 
 ### Navigation (Sidebar)
 - **Background:** Pitch Slate (#0a0a0c). Fixed width (240px).
-- **Nav items:** Body weight (400) at 0.9rem, Silver Mist (#9b9ba3). Active item uses Spotify Green (#1db954). Hover shifts background to rgba(255, 255, 255, 0.06).
+- **Nav items:** Body weight (400) at 0.9rem, Silver Mist (#9b9ba3). Active item uses Twilight Purple (#834F9E). Hover shifts background to rgba(255, 255, 255, 0.06).
 - **Playlist items:** Same style as nav items. Draggable. Context menu on right-click.
 - **Bottom section:** Settings link, account info — visually separated by a Ghost White border.
 
@@ -182,14 +182,14 @@ Shadows appear only as a response to interaction. They are small and warm.
 
 ### Inputs / Fields
 - **Style:** Slate Black (#131316) background, no border at rest. Ghost White bottom border.
-- **Focus:** Ghost White border shifts to Dim White. Optional Spotify Green accent line at bottom.
+- **Focus:** Ghost White border shifts to Dim White. Optional Twilight Purple accent line at bottom.
 - **Placeholder:** Ash (#6b6b73).
 - **Error:** Alert Red border + Error BG tint (#e74c3c at 0.1 opacity).
 
 ### Player Bar
 - **Background:** Slate Black (#131316), full-width. Fixed height (72px).
 - **Layout:** Three-column: track info (left), transport + progress (center), volume + devices (right).
-- **Progress:** Spotify Green (#1db954) fill on Dim White track. Rounded full. Height 4px at rest, 6px on hover (for easier scrubbing).
+- **Progress:** Twilight Purple (#834F9E) fill on Dim White track. Rounded full. Height 4px at rest, 6px on hover (for easier scrubbing).
 
 ### Toast Notifications
 - **Background:** Slate Black (#131316) with full opacity.
@@ -201,7 +201,7 @@ Shadows appear only as a response to interaction. They are small and warm.
 
 ### Do:
 - **Do** let album art drive the color on each screen. The UI is deliberately neutral so covers and artist imagery provide the visual energy.
-- **Do** use Spotify green as the single accent, and only where action is needed. Play buttons, active nav items, progress bars.
+- **Do** use Twilight Purple as the single accent, and only where action is needed. Play buttons, active nav items, progress bars.
 - **Do** use Inter at every weight. 400 for body, 500 for emphasis, 600 for subheads, 700 for headings. The weight contrast IS the hierarchy.
 - **Do** keep surfaces flat at rest. Use background color (Pitch Slate, Deep Charcoal, Slate Black, Iron) for depth layering.
 - **Do** make interactions felt: immediate color transitions (0.2s ease), subtle hover lifts (1px translateY), visible focus rings.

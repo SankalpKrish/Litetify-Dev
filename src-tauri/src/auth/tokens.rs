@@ -21,18 +21,38 @@ pub struct StoredTokens {
     pub access_token: String,
     pub refresh_token: String,
     pub expires_at: i64,
+    #[serde(default)]
+    pub granted_scopes: Vec<String>,
 }
 
+/// Store tokens and merge granted scopes.
+/// NOTE: This reads existing scopes from keyring to merge with new ones.
+/// This is intentional — it preserves historical consent across re-auth flows.
 pub fn store_tokens(response: &TokenResponse) -> Result<(), String> {
     let refresh = response
         .refresh_token
         .clone()
         .ok_or("no refresh_token in response")?;
 
+    // Parse scopes from response and merge with existing granted scopes
+    let new_scopes: Vec<String> = response
+        .scope
+        .as_ref()
+        .map(|s| s.split_whitespace().map(String::from).collect())
+        .unwrap_or_default();
+
+    let mut existing_scopes = load_tokens().map(|t| t.granted_scopes).unwrap_or_default();
+    for scope in &new_scopes {
+        if !existing_scopes.contains(scope) {
+            existing_scopes.push(scope.clone());
+        }
+    }
+
     let stored = StoredTokens {
         access_token: response.access_token.clone(),
         refresh_token: refresh,
         expires_at: Utc::now().timestamp() + response.expires_in as i64,
+        granted_scopes: existing_scopes,
     };
 
     let json = serde_json::to_string(&stored).map_err(|e| e.to_string())?;
@@ -58,6 +78,20 @@ pub fn tokens_exist() -> bool {
 
 pub fn is_token_expired(stored: &StoredTokens) -> bool {
     Utc::now().timestamp() >= stored.expires_at - 60
+}
+
+/// Check if a scope has been previously granted
+pub fn is_scope_granted(scope: &str) -> bool {
+    load_tokens()
+        .map(|t| t.granted_scopes.iter().any(|s| s == scope))
+        .unwrap_or(false)
+}
+
+/// Get all historically granted scopes
+pub fn get_granted_scopes() -> Vec<String> {
+    load_tokens()
+        .map(|t| t.granted_scopes)
+        .unwrap_or_default()
 }
 
 pub async fn refresh_access_token(
@@ -123,6 +157,7 @@ mod tests {
             access_token: response.access_token.clone(),
             refresh_token: response.refresh_token.clone().unwrap(),
             expires_at: Utc::now().timestamp() + response.expires_in as i64,
+            granted_scopes: vec!["streaming".into(), "user-read-email".into()],
         };
 
         let json = serde_json::to_string(&stored).unwrap();

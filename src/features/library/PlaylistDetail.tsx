@@ -182,7 +182,7 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
                         className="track-album"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onNavigate('album', { id: track.album.id });
+                          onNavigate('album', { id: track.album!.id });
                         }}
                       >
                         {track.album.name}

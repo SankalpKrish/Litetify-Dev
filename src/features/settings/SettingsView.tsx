@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { getStoredClientId } from '../../features/auth/authStore';
 import { ModsSettings } from './Mods';
 import { PlaybackSettings } from './Playback';
+import { PermissionsSettings } from './Permissions';
 import { logout, disableDevMode } from '../../features/auth/authStore';
 
 interface SettingsViewProps {
@@ -9,7 +10,7 @@ interface SettingsViewProps {
   onLogout: () => void;
 }
 
-type SettingsTab = 'playback' | 'mods' | 'account';
+type SettingsTab = 'playback' | 'mods' | 'permissions' | 'account';
 
 export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('playback');
@@ -37,6 +38,12 @@ export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
           Mods
         </button>
         <button
+          className={`settings-tab${activeTab === 'permissions' ? ' settings-tab-active' : ''}`}
+          onClick={() => setActiveTab('permissions')}
+        >
+          Permissions
+        </button>
+        <button
           className={`settings-tab${activeTab === 'account' ? ' settings-tab-active' : ''}`}
           onClick={() => setActiveTab('account')}
         >
@@ -46,6 +53,7 @@ export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
       <div className="settings-content">
         {activeTab === 'playback' && <PlaybackSettings />}
         {activeTab === 'mods' && <ModsSettings />}
+        {activeTab === 'permissions' && <PermissionsSettings />}
         {activeTab === 'account' && (
           <div className="settings-page">
             <div className="settings-header">

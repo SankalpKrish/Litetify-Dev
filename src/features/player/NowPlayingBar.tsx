@@ -3,6 +3,7 @@ import { ProgressBar } from './ProgressBar';
 import { VolumeControl } from './VolumeControl';
 import { DeviceSelector } from './DeviceSelector';
 import { NowPlayingInfo } from './NowPlayingInfo';
+import { AutoQueueToggle } from './AutoQueueToggle';
 
 export function NowPlayingBar() {
   return (
@@ -15,6 +16,7 @@ export function NowPlayingBar() {
         <ProgressBar />
       </div>
       <div className="player-bar-right">
+        <AutoQueueToggle />
         <DeviceSelector />
         <VolumeControl />
       </div>

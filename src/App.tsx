@@ -4,6 +4,8 @@ import { checkAuth, isDevMode } from './features/auth/authStore';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { NowPlayingBar } from './features/player/NowPlayingBar';
 import { PlayerInitializer } from './features/player/PlayerInitializer';
+import { useAutoQueue } from './features/player/useAutoQueue';
+import { usePlaybackTimer } from './features/player/usePlaybackTimer';
 import { Sidebar } from './app/Sidebar';
 import { ContextMenu, setContextMenuNavigate } from './features/contextmenu/ContextMenu';
 import { ErrorBoundary } from './lib/ErrorBoundary';
@@ -150,6 +152,8 @@ function AppShell(): React.JSX.Element {
   }, [handleNavigate]);
 
   useKeyboardShortcuts();
+  useAutoQueue();
+  usePlaybackTimer();
 
   if (authStatus === 'loading') {
     return (

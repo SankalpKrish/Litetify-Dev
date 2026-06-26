@@ -2,6 +2,7 @@ import { memo, useMemo, useState, useEffect } from 'react';
 import { useModsStore } from '../mods';
 import { useContextMenuStore } from '../features/contextmenu/contextMenuStore';
 import { usePinsStore } from '../features/pins/pinsStore';
+import { PlaybackTimerBadge } from '../features/player/PlaybackTimerBadge';
 
 const COLLAPSE_KEY = 'litetify:sidebarCollapsed';
 
@@ -62,6 +63,12 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
           <circle cx="18" cy="16" r="3" />
         </svg>
       );
+    case 'stats':
+      return (
+        <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: 'var(--lt-accent)' }}>
+          L
+        </div>
+      );
     default:
       return null;
   }
@@ -100,7 +107,10 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
     <aside className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`} aria-label="Sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">L</div>
+          <div className="sidebar-logo-icon">
+            L
+            <PlaybackTimerBadge />
+          </div>
           <span className="sidebar-logo-text">Litetify</span>
           {devMode && <span className="dev-badge">DEV</span>}
         </div>

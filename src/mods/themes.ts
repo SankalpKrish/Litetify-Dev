@@ -2,7 +2,6 @@ import type { ModEntry } from './manifest';
 import { readModFile } from './loader';
 
 const THEME_STYLE_ID_PREFIX = 'litetify-theme-';
-let activeThemeMod: string | null = null;
 
 function sanitizeCss(css: string): string {
   return css.replace(/url\(\s*(['"]?)[^)'"]+\1\s*\)/gi, 'url()');
@@ -15,7 +14,6 @@ function getActiveStyleTag(): HTMLStyleElement | null {
 function removeActiveTheme(): void {
   const existing = getActiveStyleTag();
   if (existing) existing.remove();
-  activeThemeMod = null;
 }
 
 export async function loadTheme(mod: ModEntry): Promise<void> {
@@ -29,8 +27,6 @@ export async function loadTheme(mod: ModEntry): Promise<void> {
   style.id = `${THEME_STYLE_ID_PREFIX}${mod.manifest.name}`;
   style.textContent = sanitizeCss(css);
   document.head.appendChild(style);
-
-  activeThemeMod = mod.manifest.name;
 }
 
 export function activateTheme(name: string | null, registry: ModEntry[]): void {

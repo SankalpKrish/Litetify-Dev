@@ -10,9 +10,9 @@
   --lt-fg-secondary: #9b9ba3;
   --lt-fg-tertiary: #6b6b73;
 
-  --lt-accent: #1db954;
-  --lt-accent-hover: #1ed760;
-  --lt-accent-subtle: rgba(29, 185, 84, 0.15);
+  --lt-accent: #834F9E;
+  --lt-accent-hover: #9B6BB5;
+  --lt-accent-subtle: rgba(131, 79, 158, 0.15);
 
   --lt-border: rgba(255, 255, 255, 0.06);
   --lt-border-hover: rgba(255, 255, 255, 0.12);
@@ -59,7 +59,7 @@
   --lt-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --lt-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --lt-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --lt-on-accent: #000;
+  --lt-on-accent: #fff;
 
   --lt-sidebar-collapsed: 0px;
 

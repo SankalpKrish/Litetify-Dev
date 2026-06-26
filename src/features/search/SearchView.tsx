@@ -171,7 +171,7 @@ export function SearchView({ onNavigate }: SearchViewProps) {
                             className="track-album"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onNavigate('album', { id: track.album.id });
+                              onNavigate('album', { id: track.album!.id });
                             }}
                           >
                             {track.album.name}

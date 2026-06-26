@@ -10,21 +10,57 @@ use url::Url;
 const DEFAULT_REDIRECT_URI: &str = "http://127.0.0.1:14523/callback";
 const MAX_PORT_TRIES: u16 = 10;
 
-const SCOPES: &str = "streaming \
-    user-read-email \
-    user-read-private \
-    user-read-playback-state \
-    user-modify-playback-state \
-    user-library-read \
-    user-library-modify \
-    user-top-read \
-    user-read-recently-played \
-    playlist-read-private \
-    playlist-read-collaborative \
-    playlist-modify-public \
-    playlist-modify-private";
+/// Core scopes required for basic app functionality
+const CORE_SCOPES: &[&str] = &[
+    "streaming",
+    "user-read-email",
+    "user-read-private",
+    "user-read-playback-state",
+    "user-modify-playback-state",
+    "user-library-read",
+    "user-library-modify",
+    "playlist-read-private",
+    "playlist-read-collaborative",
+    "playlist-modify-public",
+    "playlist-modify-private",
+];
 
-pub fn build_auth_url(client_id: &str, challenge: &str, state: &str, port: u16) -> String {
+/// Feature-specific scopes that are optional
+const FEATURE_SCOPES: &[(&str, &[&str])] = &[
+    ("stats", &["user-top-read", "user-read-recently-played"]),
+];
+
+/// Get all scopes for a list of enabled features
+pub fn get_required_scopes(enabled_features: &[&str]) -> Vec<String> {
+    let mut scopes: Vec<String> = CORE_SCOPES.iter().map(|s| s.to_string()).collect();
+    
+    for (feature, feature_scopes) in FEATURE_SCOPES {
+        if enabled_features.contains(feature) {
+            for scope in *feature_scopes {
+                if !scopes.contains(&scope.to_string()) {
+                    scopes.push(scope.to_string());
+                }
+            }
+        }
+    }
+    
+    scopes
+}
+
+/// Check if re-auth is needed for the requested features
+/// Returns scopes that need to be newly authorized
+pub fn get_new_scopes_needed(enabled_features: &[&str]) -> Vec<String> {
+    let required = get_required_scopes(enabled_features);
+    let granted = tokens::get_granted_scopes();
+    
+    required
+        .iter()
+        .filter(|s| !granted.contains(s))
+        .cloned()
+        .collect()
+}
+
+pub fn build_auth_url(client_id: &str, challenge: &str, state: &str, port: u16, scopes: &str) -> String {
     let redirect_uri = format!("http://127.0.0.1:{port}/callback");
     let mut url = Url::parse("https://accounts.spotify.com/authorize").expect("invalid static auth URL");
     url.query_pairs_mut()
@@ -34,7 +70,7 @@ pub fn build_auth_url(client_id: &str, challenge: &str, state: &str, port: u16) 
         .append_pair("code_challenge_method", "S256")
         .append_pair("code_challenge", challenge)
         .append_pair("state", state)
-        .append_pair("scope", SCOPES);
+        .append_pair("scope", scopes);
     url.to_string()
 }
 
@@ -120,6 +156,7 @@ pub async fn fetch_profile(access_token: &str) -> Result<serde_json::Value, Stri
 pub async fn login(
     _app_handle: tauri::AppHandle,
     client_id: String,
+    enabled_features: Option<Vec<String>>,
 ) -> Result<String, String> {
     let verifier = generate_code_verifier();
     let challenge = code_challenge(&verifier);
@@ -129,7 +166,15 @@ pub async fn login(
     let server = try_bind_server(base_port, state.clone())?;
     let port = server.port;
 
-    let auth_url = build_auth_url(&client_id, &challenge, &state, port);
+    // Build scopes based on enabled features
+    let features: Vec<&str> = enabled_features
+        .as_ref()
+        .map(|f| f.iter().map(|s| s.as_str()).collect())
+        .unwrap_or_default();
+    let scopes = get_required_scopes(&features);
+    let scope_str = scopes.join(" ");
+
+    let auth_url = build_auth_url(&client_id, &challenge, &state, port, &scope_str);
 
     tauri_plugin_opener::open_url(&auth_url, None::<&str>)
         .map_err(|e| format!("failed to open browser: {e}"))?;
@@ -162,6 +207,19 @@ pub async fn login(
     }
 
     Ok("authenticated".into())
+}
+
+/// Check if re-auth is needed for the requested features
+#[tauri::command]
+pub fn check_reauth_needed(enabled_features: Vec<String>) -> Vec<String> {
+    let features: Vec<&str> = enabled_features.iter().map(|s| s.as_str()).collect();
+    get_new_scopes_needed(&features)
+}
+
+/// Get all historically granted scopes
+#[tauri::command]
+pub fn get_granted_scopes_command() -> Vec<String> {
+    tokens::get_granted_scopes()
 }
 
 #[tauri::command]

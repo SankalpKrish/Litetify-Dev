@@ -33,6 +33,8 @@ pub fn run() {
             auth::check_auth,
             auth::get_valid_token,
             auth::get_profile,
+            auth::check_reauth_needed,
+            auth::get_granted_scopes_command,
             api::api_get_me,
             api::api_get_playlists,
             api::api_get_playlist,

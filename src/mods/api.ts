@@ -1,6 +1,6 @@
 import type { PlaybackEngine } from '../playback/engine';
 import type { PlaybackState } from '../playback/engine';
-import { apiGetPlaylists, apiGetLikedTracks } from '../lib/api';
+import { apiGetPlaylists, apiGetLikedTracks, apiGetTopArtists, apiGetTopTracks, apiGetRecentlyPlayed } from '../lib/api';
 
 export interface LitetifyAPI {
   version: string;
@@ -18,6 +18,9 @@ export interface LitetifyAPI {
   library: {
     getPlaylists: () => Promise<readonly { id: string; name: string }[]>;
     getLikedTracks: () => Promise<readonly { uri: string; name: string }[]>;
+    getTopArtists: (timeRange?: string, limit?: number) => Promise<readonly { id: string; name: string; genres: string[]; images: { url: string }[] }[]>;
+    getTopTracks: (timeRange?: string, limit?: number) => Promise<readonly { id: string; name: string; artists: { name: string }[]; album: { images: { url: string }[] } }[]>;
+    getRecentlyPlayed: (limit?: number) => Promise<readonly { track: { id: string; name: string; artists: { name: string }[] }; played_at: string }[]>;
   };
   ui: {
     addSidebarItem: (id: string, label: string, icon: string) => void;
@@ -142,6 +145,31 @@ function makeLibraryAPI(): LitetifyAPI['library'] {
     async getLikedTracks() {
       const res = await apiGetLikedTracks(50);
       return res.items.map((t) => ({ uri: t.track.uri, name: t.track.name }));
+    },
+    async getTopArtists(timeRange = 'medium_term', limit = 20) {
+      const res = await apiGetTopArtists(limit, undefined, timeRange);
+      return res.items
+        .filter((a) => a.id != null)
+        .map((a) => ({ id: a.id!, name: a.name, genres: a.genres || [], images: a.images || [] }));
+    },
+    async getTopTracks(timeRange = 'medium_term', limit = 20) {
+      const res = await apiGetTopTracks(limit, undefined, timeRange);
+      return res.items
+        .filter((t) => t.id != null)
+        .map((t) => ({ id: t.id!, name: t.name, artists: t.artists || [], album: t.album || { images: [] } }));
+    },
+    async getRecentlyPlayed(limit = 50) {
+      const res = await apiGetRecentlyPlayed(limit);
+      return res.items
+        .filter((h) => h.track.id != null)
+        .map((h) => ({
+          track: {
+            id: h.track.id!,
+            name: h.track.name,
+            artists: h.track.artists || [],
+          },
+          played_at: h.played_at,
+        }));
     },
   };
 }

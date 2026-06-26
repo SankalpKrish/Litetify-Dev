@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { getStoredEngineType, setStoredEngineType } from '../player/playerStore';
 import type { EngineType } from '../player/playerStore';
+import {
+  getAutoQueueEnabled,
+  setAutoQueueEnabled,
+  getAutoQueueShowToast,
+  setAutoQueueShowToast,
+  getAutoQueueSeedStrategy,
+  setAutoQueueSeedStrategy,
+  type SeedStrategy,
+} from '../player/autoQueue';
 
 export function PlaybackSettings() {
   const [current, setCurrent] = useState<EngineType>(getStoredEngineType);
   const [showWarning, setShowWarning] = useState(false);
   const [pending, setPending] = useState<EngineType | null>(null);
+  const [autoQueueEnabled, setAutoQueueEnabledState] = useState(getAutoQueueEnabled);
+  const [showToast, setShowToastState] = useState(getAutoQueueShowToast);
+  const [seedStrategy, setSeedStrategyState] = useState<SeedStrategy>(getAutoQueueSeedStrategy);
 
   function handleToggle() {
     const next: EngineType = current === 'websdk' ? 'librespot' : 'websdk';
@@ -54,6 +66,83 @@ export function PlaybackSettings() {
           </label>
         </div>
       </div>
+
+      <div className="settings-header" style={{ marginTop: 'var(--lt-space-xl)' }}>
+        <h2>Auto-Queue</h2>
+      </div>
+
+      <div className="settings-section">
+        <div className="mod-item">
+          <div className="mod-item-info">
+            <strong>Auto-queue similar tracks</strong>
+            <p className="mod-item-desc">
+              Automatically queue a similar track when the current track ends and the queue is empty.
+            </p>
+          </div>
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={autoQueueEnabled}
+              onChange={() => {
+                const next = !autoQueueEnabled;
+                setAutoQueueEnabledState(next);
+                setAutoQueueEnabled(next);
+              }}
+            />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+      </div>
+
+      {autoQueueEnabled && (
+        <>
+          <div className="settings-section">
+            <div className="mod-item">
+              <div className="mod-item-info">
+                <strong>Show notification</strong>
+                <p className="mod-item-desc">
+                  Show a toast notification when a track is auto-queued.
+                </p>
+              </div>
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={showToast}
+                  onChange={() => {
+                    const next = !showToast;
+                    setShowToastState(next);
+                    setAutoQueueShowToast(next);
+                  }}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <div className="mod-item">
+              <div className="mod-item-info">
+                <strong>Seed strategy</strong>
+                <p className="mod-item-desc">
+                  Currently: {seedStrategy === 'current' ? 'Current track only' : 'Mixed with top tracks'}. Click to switch to {seedStrategy === 'current' ? 'mixed seeds (more variety)' : 'current track only (more consistent)'}.
+                </p>
+              </div>
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={seedStrategy === 'mix'}
+                  onChange={() => {
+                    const next: SeedStrategy = seedStrategy === 'current' ? 'mix' : 'current';
+                    setSeedStrategyState(next);
+                    setAutoQueueSeedStrategy(next);
+                  }}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+          </div>
+        </>
+      )}
 
       {showWarning && (
         <div className="engine-warning-overlay" onClick={() => setShowWarning(false)}>

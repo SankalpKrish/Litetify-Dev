@@ -1051,8 +1051,15 @@ pub async fn api_get_top_artists(
     client_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
+    #[allow(non_snake_case)]
+    timeRange: Option<String>,
 ) -> Result<TopArtists, String> {
-    let mut params: Vec<(&str, String)> = vec![("time_range", "medium_term".into())];
+    let mut params: Vec<(&str, String)> = vec![];
+    if let Some(tr) = timeRange {
+        params.push(("time_range", tr));
+    } else {
+        params.push(("time_range", "medium_term".into()));
+    }
     if let Some(l) = limit {
         params.push(("limit", l.to_string()));
     }
@@ -1068,8 +1075,15 @@ pub async fn api_get_top_tracks(
     client_id: String,
     limit: Option<i32>,
     offset: Option<i32>,
+    #[allow(non_snake_case)]
+    timeRange: Option<String>,
 ) -> Result<TopTracks, String> {
-    let mut params: Vec<(&str, String)> = vec![("time_range", "medium_term".into())];
+    let mut params: Vec<(&str, String)> = vec![];
+    if let Some(tr) = timeRange {
+        params.push(("time_range", tr));
+    } else {
+        params.push(("time_range", "medium_term".into()));
+    }
     if let Some(l) = limit {
         params.push(("limit", l.to_string()));
     }

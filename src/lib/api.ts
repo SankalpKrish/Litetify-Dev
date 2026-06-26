@@ -195,15 +195,17 @@ export async function apiRemoveFromPlaylist(playlistId: string, uris: string[]):
 export async function apiGetTopArtists(
   limit?: number,
   offset?: number,
+  timeRange?: string,
 ): Promise<TopArtists> {
-  return req<TopArtists>('api_get_top_artists', { limit, offset });
+  return req<TopArtists>('api_get_top_artists', { limit, offset, timeRange });
 }
 
 export async function apiGetTopTracks(
   limit?: number,
   offset?: number,
+  timeRange?: string,
 ): Promise<TopTracks> {
-  return req<TopTracks>('api_get_top_tracks', { limit, offset });
+  return req<TopTracks>('api_get_top_tracks', { limit, offset, timeRange });
 }
 
 export async function apiGetRecentlyPlayed(

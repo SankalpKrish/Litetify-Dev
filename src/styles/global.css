@@ -178,6 +178,7 @@ a {
   font-weight: var(--lt-font-weight-bold);
   color: var(--lt-on-accent);
   flex-shrink: 0;
+  position: relative;
 }
 
 .sidebar-logo-text {

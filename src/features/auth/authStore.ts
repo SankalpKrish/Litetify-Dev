@@ -74,9 +74,17 @@ export async function checkAuth(): Promise<boolean> {
   }
 }
 
-export async function login(clientId: string): Promise<void> {
-  await invoke('login', { clientId });
+export async function login(clientId: string, enabledFeatures?: string[]): Promise<void> {
+  await invoke('login', { clientId, enabledFeatures });
   persistClientId(clientId);
+}
+
+export async function checkReauthNeeded(enabledFeatures: string[]): Promise<string[]> {
+  return await invoke<string[]>('check_reauth_needed', { enabledFeatures });
+}
+
+export async function getGrantedScopes(): Promise<string[]> {
+  return await invoke<string[]>('get_granted_scopes_command');
 }
 
 export async function logout(): Promise<void> {
