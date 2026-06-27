@@ -12,6 +12,7 @@ export const ManifestSchema = z.object({
   author: z.string().max(128).optional(),
   litetifyApiVersion: z.string().min(1).max(16),
   permissions: z.array(z.string().max(64)).max(32).optional(),
+  icon: z.string().max(64).optional(),
 });
 
 export type ModManifest = z.infer<typeof ManifestSchema>;

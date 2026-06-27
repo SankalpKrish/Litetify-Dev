@@ -14,6 +14,7 @@ pub struct ModManifest {
     #[serde(rename = "litetifyApiVersion")]
     pub litetify_api_version: String,
     pub permissions: Option<Vec<String>>,
+    pub icon: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
@@ -35,6 +36,7 @@ pub struct ModEntry {
     pub author: Option<String>,
     pub litetify_api_version: String,
     pub permissions: Vec<String>,
+    pub icon: String,
     pub error: Option<String>,
 }
 
@@ -76,6 +78,7 @@ pub fn scan_mods() -> Vec<ModEntry> {
                     author: None,
                     litetify_api_version: String::new(),
                     permissions: vec![],
+                    icon: String::new(),
                     error: Some(format!("Failed to read manifest.json: {}", e)),
                 });
                 continue;
@@ -95,6 +98,7 @@ pub fn scan_mods() -> Vec<ModEntry> {
                     author: None,
                     litetify_api_version: String::new(),
                     permissions: vec![],
+                    icon: String::new(),
                     error: Some(format!("Invalid manifest.json: {}", e)),
                 });
                 continue;
@@ -113,6 +117,7 @@ pub fn scan_mods() -> Vec<ModEntry> {
                 author: manifest.author.clone(),
                 litetify_api_version: manifest.litetify_api_version.clone(),
                 permissions: manifest.permissions.unwrap_or_default(),
+                icon: manifest.icon.unwrap_or_default(),
                 error: Some(format!("Entry file '{}' not found", manifest.entry)),
             });
             continue;
@@ -128,6 +133,7 @@ pub fn scan_mods() -> Vec<ModEntry> {
             author: manifest.author,
             litetify_api_version: manifest.litetify_api_version,
             permissions: manifest.permissions.unwrap_or_default(),
+            icon: manifest.icon.unwrap_or_default(),
             error: None,
         });
     }

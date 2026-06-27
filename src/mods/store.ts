@@ -5,6 +5,7 @@ export interface ModsStore {
   registry: ModEntry[];
   activeTheme: string | null;
   customViews: Map<string, { label: string; icon: string; render: () => React.ReactNode }>;
+  customViewsVersion: number;
   setRegistry: (registry: ModEntry[]) => void;
   toggleEnabled: (path: string) => void;
   setActiveTheme: (name: string | null) => void;
@@ -17,6 +18,7 @@ export const useModsStore = create<ModsStore>((set) => ({
   registry: [],
   activeTheme: null,
   customViews: new Map(),
+  customViewsVersion: 0,
 
   setRegistry: (registry) => set({ registry }),
 
@@ -35,13 +37,13 @@ export const useModsStore = create<ModsStore>((set) => ({
     set((state) => {
       const next = new Map(state.customViews);
       next.set(id, { label, icon, render });
-      return { customViews: next };
+      return { customViews: next, customViewsVersion: state.customViewsVersion + 1 };
     }),
 
   unregisterCustomView: (id) =>
     set((state) => {
       const next = new Map(state.customViews);
       next.delete(id);
-      return { customViews: next };
+      return { customViews: next, customViewsVersion: state.customViewsVersion + 1 };
     }),
 }));

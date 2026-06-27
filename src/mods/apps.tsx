@@ -28,7 +28,7 @@ function filterApiByPermissions(api: Record<string, unknown>, permissions: strin
   return walk(api, '');
 }
 
-export async function loadCustomApp(mod: { manifest: { type: string; name: string; entry: string; permissions?: string[] }; path: string }): Promise<void> {
+export async function loadCustomApp(mod: { manifest: { type: string; name: string; entry: string; permissions?: string[]; icon?: string }; path: string }): Promise<void> {
   console.log('[mods] loadCustomApp called:', mod.path, mod.manifest.type, mod.manifest.entry);
   if (mod.manifest.type !== 'app') { console.log('[mods] skipping, not app type'); return; }
 
@@ -47,9 +47,10 @@ export async function loadCustomApp(mod: { manifest: { type: string; name: strin
   };
 
   try {
+    const cleanCode = code.replace(/;\s*$/, '');
     const keys = Object.keys(globals);
     const vals = Object.values(globals);
-    const fn = new Function(...keys, '"use strict";\n' + code + '\n//# sourceURL=mod://' + modId + '/' + mod.manifest.entry);
+    const fn = new Function(...keys, '"use strict";\nreturn (' + cleanCode + ')\n//# sourceURL=mod://' + modId + '/' + mod.manifest.entry);
 
     const result = fn(...vals);
     const appDef = (result && typeof result === 'object' ? result : {}) as Record<string, unknown>;
@@ -58,10 +59,12 @@ export async function loadCustomApp(mod: { manifest: { type: string; name: strin
     if (typeof appDef.mount === 'function') {
       const m = appDef.mount as (el: HTMLElement) => void;
       const u = typeof appDef.unmount === 'function' ? (appDef.unmount as () => void) : undefined;
-      useModsStore.getState().registerCustomView(modId, label, () => <MountContainer mount={m} unmount={u} />);
+      useModsStore.getState().registerCustomView(modId, label, () => <MountContainer mount={m} unmount={u} />, mod.manifest.icon);
     } else if (typeof appDef.render === 'function') {
       const renderFn = appDef.render as () => string;
-      useModsStore.getState().registerCustomView(modId, label, () => <HtmlContainer html={renderFn()} />);
+      useModsStore.getState().registerCustomView(modId, label, () => <HtmlContainer html={renderFn()} />, mod.manifest.icon);
+    } else {
+      console.warn('[mods] App', mod.manifest.name, 'returned no mount/render function. Keys:', Object.keys(appDef));
     }
   } catch (err) {
     console.error("[mods] Failed to load custom app '" + mod.manifest.name + "':", err);

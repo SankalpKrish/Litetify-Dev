@@ -76,6 +76,7 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
 
 export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
   const customViews = useModsStore((s) => s.customViews);
+  const customViewsVersion = useModsStore((s) => s.customViewsVersion);
   const openContextMenu = useContextMenuStore((s) => s.openMenu);
   const pins = usePinsStore((s) => s.pins);
   const [collapsed, setCollapsed] = useState(loadCollapsed);
@@ -101,7 +102,7 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
       items.push({ id, label: view.label, icon: view.icon });
     });
     return items;
-  }, [customViews]);
+  }, [customViews, customViewsVersion]);
 
   return (
     <aside className={`sidebar${collapsed ? ' sidebar-collapsed' : ''}`} aria-label="Sidebar">

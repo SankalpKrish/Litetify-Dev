@@ -15,6 +15,7 @@ export interface RawModEntry {
   author: string | null;
   litetify_api_version: string;
   permissions: string[];
+  icon: string | null;
   error: string | null;
 }
 
@@ -39,6 +40,7 @@ function rawToEntry(raw: RawModEntry): ModEntry {
       author: raw.author ?? undefined,
       litetifyApiVersion: raw.litetify_api_version,
       permissions: raw.permissions,
+      icon: raw.icon ?? undefined,
     },
     enabled: false,
     error: raw.error ?? undefined,

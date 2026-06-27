@@ -33,7 +33,9 @@ export function ModsSettings() {
         switch (mod.manifest.type) {
           case 'app':
             await loadCustomApp(mod);
-            console.log(`[mods] loadCustomApp succeeded for ${mod.manifest.name}`);
+            const modId = mod.manifest.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const registered = useModsStore.getState().customViews.has(modId);
+            console.log(`[mods] loadCustomApp succeeded for ${mod.manifest.name}, registered=${registered}`);
             break;
           case 'theme':
             await loadTheme(mod);
