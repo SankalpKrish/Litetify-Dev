@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ensurePlayer, webSdkEngine } from '../../playback/websdk';
 import { librespotEngine } from '../../playback/librespot';
-import { usePlayerStore, getStoredEngineType } from './playerStore';
+import { usePlayerStore } from './playerStore';
 import { getStoredClientId } from '../auth/authStore';
 import { setPlaybackEngine, setStateChangeCallbacks } from '../../mods/api';
 import { emitEvent } from '../../mods/api';
@@ -22,7 +22,7 @@ export function PlayerInitializer() {
     if (initialized.current) return;
     initialized.current = true;
 
-    const engineType = getStoredEngineType();
+    const engineType = usePlayerStore.getState().engineType;
     const engine = engineType === 'librespot' ? librespotEngine : webSdkEngine;
     const clientId = getStoredClientId();
     console.log('[litetify][init] PlayerInitializer running. engineType =', engineType, 'clientId set =', !!clientId);

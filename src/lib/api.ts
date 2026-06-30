@@ -46,6 +46,14 @@ export async function apiGetMe(): Promise<SpotifyUserProfile> {
   return req<SpotifyUserProfile>('api_get_me', {});
 }
 
+export async function apiCreatePlaylist(name: string, description?: string, public_?: boolean): Promise<void> {
+  return req<void>('api_create_playlist', { name, description: description ?? null, public: public_ ?? null });
+}
+
+export async function apiUpdatePlaylist(playlistId: string, name?: string, description?: string, public_?: boolean): Promise<void> {
+  return req<void>('api_update_playlist', { playlistId, name: name ?? null, description: description ?? null, public: public_ ?? null });
+}
+
 export async function apiGetPlaylists(
   limit?: number,
   offset?: number,
@@ -212,4 +220,24 @@ export async function apiGetRecentlyPlayed(
   limit?: number,
 ): Promise<RecentlyPlayed> {
   return req<RecentlyPlayed>('api_get_recently_played', { limit });
+}
+
+export async function apiCheckFollowArtist(artistId: string): Promise<boolean> {
+  return req<boolean>('api_check_follow_artist', { artistId });
+}
+
+export async function apiFollowArtist(artistId: string): Promise<void> {
+  return req<void>('api_follow_artist', { artistId });
+}
+
+export async function apiUnfollowArtist(artistId: string): Promise<void> {
+  return req<void>('api_unfollow_artist', { artistId });
+}
+
+export async function apiFollowPlaylist(playlistId: string): Promise<void> {
+  return req<void>('api_follow_playlist', { playlistId });
+}
+
+export async function apiUnfollowPlaylist(playlistId: string): Promise<void> {
+  return req<void>('api_unfollow_playlist', { playlistId });
 }

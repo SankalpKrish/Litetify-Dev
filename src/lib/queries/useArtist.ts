@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { apiGetArtist, apiGetArtistTopTracks, apiGetArtistAlbums, apiGetRelatedArtists } from '../api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiGetArtist, apiGetArtistTopTracks, apiGetArtistAlbums, apiGetRelatedArtists, apiCheckFollowArtist, apiFollowArtist, apiUnfollowArtist } from '../api';
 
 export const artistKeys = {
   detail: (id: string) => ['artist', id] as const,
@@ -35,6 +35,27 @@ export function useArtistAlbums(id: string, limit?: number, offset?: number) {
     staleTime: 5 * 60 * 1000,
     retry: 2,
     enabled: !!id,
+  });
+}
+
+export function useIsFollowingArtist(id: string) {
+  return useQuery({
+    queryKey: ['artist', id, 'following'],
+    queryFn: () => apiCheckFollowArtist(id),
+    staleTime: 60 * 1000,
+    enabled: !!id,
+  });
+}
+
+export function useFollowArtist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ artistId, follow }: { artistId: string; follow: boolean }) =>
+      follow ? apiFollowArtist(artistId) : apiUnfollowArtist(artistId),
+    onSuccess: (_, { artistId }) => {
+      qc.invalidateQueries({ queryKey: ['artist', artistId, 'following'] });
+      qc.invalidateQueries({ queryKey: ['artist', artistId] });
+    },
   });
 }
 

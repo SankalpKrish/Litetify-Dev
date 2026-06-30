@@ -47,5 +47,6 @@ src-tauri/WixTools/
 
 # Misc
 *.local
+nul
 coverage/
 .cache/

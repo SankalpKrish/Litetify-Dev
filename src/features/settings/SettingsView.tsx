@@ -3,16 +3,16 @@ import { getStoredClientId } from '../../features/auth/authStore';
 import { ModsSettings } from './Mods';
 import { PlaybackSettings } from './Playback';
 import { PermissionsSettings } from './Permissions';
-import { logout, disableDevMode } from '../../features/auth/authStore';
+import { KeybindingsSettings } from './Keybindings';
+import { logout } from '../../features/auth/authStore';
 
 interface SettingsViewProps {
-  devMode: boolean;
   onLogout: () => void;
 }
 
-type SettingsTab = 'playback' | 'mods' | 'permissions' | 'account';
+type SettingsTab = 'playback' | 'mods' | 'permissions' | 'keybindings' | 'account';
 
-export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
+export function SettingsView({ onLogout }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('playback');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
 
@@ -44,6 +44,12 @@ export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
           Permissions
         </button>
         <button
+          className={`settings-tab${activeTab === 'keybindings' ? ' settings-tab-active' : ''}`}
+          onClick={() => setActiveTab('keybindings')}
+        >
+          Shortcuts
+        </button>
+        <button
           className={`settings-tab${activeTab === 'account' ? ' settings-tab-active' : ''}`}
           onClick={() => setActiveTab('account')}
         >
@@ -54,6 +60,7 @@ export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
         {activeTab === 'playback' && <PlaybackSettings />}
         {activeTab === 'mods' && <ModsSettings />}
         {activeTab === 'permissions' && <PermissionsSettings />}
+        {activeTab === 'keybindings' && <KeybindingsSettings />}
         {activeTab === 'account' && (
           <div className="settings-page">
             <div className="settings-header">
@@ -70,15 +77,7 @@ export function SettingsView({ devMode, onLogout }: SettingsViewProps) {
               </div>
             </div>
             <div className="settings-section">
-              {devMode ? (
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => { disableDevMode(); onLogout(); }}
-                  style={{ color: 'var(--lt-danger, #e74c3c)', borderColor: 'var(--lt-danger, #e74c3c)' }}
-                >
-                  Exit Dev Mode
-                </button>
-              ) : !confirmingLogout ? (
+              {!confirmingLogout ? (
                 <button
                   className="btn btn-secondary"
                   onClick={() => setConfirmingLogout(true)}

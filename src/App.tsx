@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { checkAuth, isDevMode } from './features/auth/authStore';
+import { checkAuth } from './features/auth/authStore';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { NowPlayingBar } from './features/player/NowPlayingBar';
 import { PlayerInitializer } from './features/player/PlayerInitializer';
@@ -10,6 +10,7 @@ import { Sidebar } from './app/Sidebar';
 import { ContextMenu, setContextMenuNavigate } from './features/contextmenu/ContextMenu';
 import { ErrorBoundary } from './lib/ErrorBoundary';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
+import { MiniPlayerView } from './features/player/MiniPlayerView';
 import { initMods, useModsStore } from './mods';
 import { Toast } from './features/settings/Toast';
 import { setToastCallbacks, setSidebarItemCallbacks } from './mods/api';
@@ -43,6 +44,17 @@ type View =
   | { name: 'mod'; modId: string };
 
 function AppShell(): React.JSX.Element {
+  const isMini = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('mini') === '1';
+
+  if (isMini) {
+    return (
+      <ErrorBoundary>
+        <PlayerInitializer />
+        <MiniPlayerView />
+      </ErrorBoundary>
+    );
+  }
+
   const [authStatus, setAuthStatus] = useState<
     'loading' | 'authenticated' | 'unauthenticated'
   >(() => 'loading');
@@ -63,8 +75,6 @@ function AppShell(): React.JSX.Element {
   useEffect(() => {
     checkAuth().then((hasTokens) => {
       if (hasTokens) {
-        setAuthStatus('authenticated');
-      } else if (isDevMode()) {
         setAuthStatus('authenticated');
       } else {
         setAuthStatus('unauthenticated');
@@ -168,7 +178,6 @@ function AppShell(): React.JSX.Element {
     return <LoginScreen onAuthenticated={handleAuthenticated} />;
   }
 
-  const devMode = isDevMode();
   const currentViewName = currentView.name;
   const currentPlaylistId = currentView.name === 'playlist' ? currentView.id : undefined;
   const currentModId = currentView.name === 'mod' ? currentView.modId : undefined;
@@ -179,9 +188,8 @@ function AppShell(): React.JSX.Element {
         Skip to content
       </a>
       <div className="app-layout">
-      {!devMode && <PlayerInitializer />}
+      <PlayerInitializer />
       <Sidebar
-        devMode={devMode}
         currentView={currentViewName}
         currentPlaylistId={currentPlaylistId}
         currentModId={currentModId}
@@ -215,7 +223,7 @@ function AppShell(): React.JSX.Element {
             {currentView.name === 'home' && <HomeView onNavigate={handleNavigate} />}
             {currentView.name === 'search' && <SearchView onNavigate={handleNavigate} />}
             {currentView.name === 'library' && <LibraryView onNavigate={handleNavigate} />}
-            {currentView.name === 'settings' && <SettingsView devMode={devMode} onLogout={handleLogout} />}
+            {currentView.name === 'settings' && <SettingsView onLogout={handleLogout} />}
             {currentView.name === 'playlist' && (
               <PlaylistDetail playlistId={currentView.id} onNavigate={handleNavigate} />
             )}

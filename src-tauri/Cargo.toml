@@ -31,8 +31,11 @@ keyring = "2"
 rand = "0.8"
 url = "2"
 chrono = { version = "0.4", features = ["serde"] }
-tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread"] }
+tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "macros"] }
 librespot = { version = "0.7", default-features = false, features = ["rodio-backend", "rustls-tls-webpki-roots"], optional = true }
+
+[dev-dependencies]
+mockito = "1"
 
 [features]
 # librespot native-audio engine is OPT-IN and OFF by default (see plan Phase 6).

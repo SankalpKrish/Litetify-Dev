@@ -26,7 +26,6 @@ const PlaylistThumb = memo(function PlaylistThumb({ src, alt }: { src: string; a
 });
 
 interface SidebarProps {
-  devMode: boolean;
   currentView: string;
   currentPlaylistId?: string;
   currentModId?: string;
@@ -74,7 +73,7 @@ const NavIcon = memo(function NavIcon({ icon }: { icon: string }) {
   }
 });
 
-export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
+export function Sidebar({ currentView, currentPlaylistId, currentModId, onNavigate }: SidebarProps) {
   const customViews = useModsStore((s) => s.customViews);
   const customViewsVersion = useModsStore((s) => s.customViewsVersion);
   const openContextMenu = useContextMenuStore((s) => s.openMenu);
@@ -113,7 +112,6 @@ export function Sidebar({ devMode, currentView, currentPlaylistId, currentModId,
             <PlaybackTimerBadge />
           </div>
           <span className="sidebar-logo-text">Litetify</span>
-          {devMode && <span className="dev-badge">DEV</span>}
         </div>
         <button
           className="sidebar-collapse-btn"

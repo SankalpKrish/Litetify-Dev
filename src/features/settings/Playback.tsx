@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getStoredEngineType, setStoredEngineType } from '../player/playerStore';
+import { usePlayerStore } from '../player/playerStore';
 import type { EngineType } from '../player/playerStore';
 import {
   getAutoQueueEnabled,
@@ -10,14 +10,25 @@ import {
   setAutoQueueSeedStrategy,
   type SeedStrategy,
 } from '../player/autoQueue';
+import {
+  getCrossfadeEnabled,
+  setCrossfadeEnabled,
+  getCrossfadeDuration,
+  setCrossfadeDuration,
+  getGaplessEnabled,
+  setGaplessEnabled,
+} from '../player/crossfade';
 
 export function PlaybackSettings() {
-  const [current, setCurrent] = useState<EngineType>(getStoredEngineType);
+  const [current, setCurrent] = useState<EngineType>(usePlayerStore.getState().engineType);
   const [showWarning, setShowWarning] = useState(false);
   const [pending, setPending] = useState<EngineType | null>(null);
   const [autoQueueEnabled, setAutoQueueEnabledState] = useState(getAutoQueueEnabled);
   const [showToast, setShowToastState] = useState(getAutoQueueShowToast);
   const [seedStrategy, setSeedStrategyState] = useState<SeedStrategy>(getAutoQueueSeedStrategy);
+  const [crossfadeOn, setCrossfadeOn] = useState(getCrossfadeEnabled);
+  const [crossfadeSec, setCrossfadeSec] = useState(getCrossfadeDuration);
+  const [gaplessOn, setGaplessOn] = useState(getGaplessEnabled);
 
   function handleToggle() {
     const next: EngineType = current === 'websdk' ? 'librespot' : 'websdk';
@@ -30,7 +41,7 @@ export function PlaybackSettings() {
   }
 
   function applySwitch(t: EngineType) {
-    setStoredEngineType(t);
+    usePlayerStore.getState().setEngineType(t);
     setCurrent(t);
     setShowWarning(false);
     setPending(null);
@@ -143,6 +154,62 @@ export function PlaybackSettings() {
           </div>
         </>
       )}
+
+      <div className="settings-header" style={{ marginTop: 'var(--lt-space-xl)' }}>
+        <h2>Crossfade &amp; Gapless</h2>
+      </div>
+
+      <div className="settings-section">
+        <div className="mod-item">
+          <div className="mod-item-info">
+            <strong>Gapless playback</strong>
+            <p className="mod-item-desc">
+              Remove gaps between tracks. Requires librespot engine for full effect.
+            </p>
+          </div>
+          <label className="toggle-label">
+            <input type="checkbox" checked={gaplessOn}
+              onChange={() => { const n = !gaplessOn; setGaplessOn(n); setGaplessEnabled(n); }} />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <div className="mod-item">
+          <div className="mod-item-info">
+            <strong>Crossfade</strong>
+            <p className="mod-item-desc">
+              Fade out the ending of one track into the beginning of the next.
+            </p>
+          </div>
+          <label className="toggle-label">
+            <input type="checkbox" checked={crossfadeOn}
+              onChange={() => { const n = !crossfadeOn; setCrossfadeOn(n); setCrossfadeEnabled(n); }} />
+            <span className="toggle-slider" />
+          </label>
+        </div>
+        {crossfadeOn && (
+          <div className="settings-slider-row" style={{ marginTop: 'var(--lt-space-md)', paddingLeft: 'var(--lt-space-md)' }}>
+            <span className="mod-item-desc">{crossfadeSec}s</span>
+            <input
+              type="range"
+              min={0}
+              max={12}
+              step={1}
+              value={crossfadeSec}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setCrossfadeSec(v);
+                setCrossfadeDuration(v);
+              }}
+              className="settings-slider"
+              aria-label="Crossfade duration in seconds"
+            />
+            <span className="mod-item-desc">12s</span>
+          </div>
+        )}
+      </div>
 
       {showWarning && (
         <div className="engine-warning-overlay" onClick={() => setShowWarning(false)}>

@@ -1,4 +1,4 @@
-import { useArtist, useArtistTopTracks, useArtistAlbums } from '../../lib/queries/useArtist';
+import { useArtist, useArtistTopTracks, useArtistAlbums, useIsFollowingArtist, useFollowArtist } from '../../lib/queries/useArtist';
 import { getImage, formatDuration } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
 import { useContextMenuStore } from '../contextmenu/contextMenuStore';
@@ -15,6 +15,8 @@ export function ArtistView({ artistId, onNavigate }: ArtistViewProps) {
   const { data: albums } = useArtistAlbums(artistId, 10);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const openContextMenu = useContextMenuStore((s) => s.openMenu);
+  const { data: following } = useIsFollowingArtist(artistId);
+  const followMut = useFollowArtist();
 
   if (isLoading) {
     return (
@@ -71,6 +73,14 @@ export function ArtistView({ artistId, onNavigate }: ArtistViewProps) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="8,5 19,12 8,19" />
           </svg>
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={() => followMut.mutate({ artistId, follow: !following })}
+          disabled={followMut.isPending}
+          style={{ marginLeft: 'var(--lt-space-md)' }}
+        >
+          {following ? 'Unfollow' : 'Follow'}
         </button>
           </div>
 

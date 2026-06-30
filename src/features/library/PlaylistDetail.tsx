@@ -1,5 +1,7 @@
+import { useState, useCallback } from 'react';
 import { usePlaylist } from '../../lib/queries/usePlaylist';
 import { usePlaylistTracks } from '../../lib/queries/usePlaylistTracks';
+import { apiFollowPlaylist, apiUnfollowPlaylist } from '../../lib/api';
 import { getImage, formatDuration, formatDateAdded, formatTotalDuration, formatNumber, pluralize } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
 import { useContextMenuStore } from '../contextmenu/contextMenuStore';
@@ -20,6 +22,21 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
   const playTrack = usePlayerStore((s) => s.playTrack);
   const openContextMenu = useContextMenuStore((s) => s.openMenu);
   const viewMode = useViewModeStore((s) => s.mode);
+  const [followState, setFollowState] = useState<'idle' | 'loading'>('idle');
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  const toggleFollow = useCallback(async () => {
+    setFollowState('loading');
+    try {
+      if (isFollowing) {
+        await apiUnfollowPlaylist(playlistId);
+      } else {
+        await apiFollowPlaylist(playlistId);
+      }
+      setIsFollowing(!isFollowing);
+    } catch { /* noop */ }
+    setFollowState('idle');
+  }, [playlistId, isFollowing]);
 
   if (plLoading) {
     return (
@@ -78,6 +95,14 @@ export function PlaylistDetail({ playlistId, onNavigate }: PlaylistDetailProps) 
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="8,5 19,12 8,19" />
           </svg>
+        </button>
+        <button
+          className="btn btn-secondary"
+          onClick={toggleFollow}
+          disabled={followState === 'loading'}
+          style={{ marginLeft: 'var(--lt-space-md)' }}
+        >
+          {isFollowing ? 'Unfollow' : 'Follow'}
         </button>
         <button
           className="detail-menu-btn"

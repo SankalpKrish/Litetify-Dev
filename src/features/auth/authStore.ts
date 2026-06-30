@@ -44,28 +44,6 @@ export function clearClientId(): void {
   }
 }
 
-const DEV_MODE_KEY = 'litetify:devMode';
-
-export function isDevMode(): boolean {
-  try {
-    return localStorage.getItem(DEV_MODE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
-
-export function enableDevMode(): void {
-  try {
-    localStorage.setItem(DEV_MODE_KEY, 'true');
-  } catch { /* noop */ }
-}
-
-export function disableDevMode(): void {
-  try {
-    localStorage.removeItem(DEV_MODE_KEY);
-  } catch { /* noop */ }
-}
-
 export async function checkAuth(): Promise<boolean> {
   try {
     return await invoke<boolean>('check_auth');

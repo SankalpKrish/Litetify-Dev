@@ -7,9 +7,18 @@ interface LibraryViewProps {
 }
 
 type LibTab = 'playlists' | 'liked';
+type SortBy = 'name' | 'recent' | 'tracks';
 
 export function LibraryView({ onNavigate }: LibraryViewProps) {
   const [tab, setTab] = useState<LibTab>('playlists');
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('recent');
+
+  const sortOptions: { key: SortBy; label: string }[] = [
+    { key: 'recent', label: 'Recent' },
+    { key: 'name', label: 'A-Z' },
+    { key: 'tracks', label: 'Tracks' },
+  ];
 
   return (
     <div>
@@ -32,8 +41,32 @@ export function LibraryView({ onNavigate }: LibraryViewProps) {
         </button>
       </div>
 
-      {tab === 'playlists' && <PlaylistList onNavigate={onNavigate} />}
-      {tab === 'liked' && <LikedSongs onNavigate={onNavigate} />}
+      <div className="lib-toolbar">
+        <div className="lib-search-wrap">
+          <svg className="lib-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            className="lib-search-input"
+            type="search"
+            placeholder={`Search ${tab === 'playlists' ? 'playlists' : 'songs'}...`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <div className="lib-sort">
+          {sortOptions.map((o) => (
+            <button
+              key={o.key}
+              className={`lib-sort-btn${sortBy === o.key ? ' lib-sort-btn--active' : ''}`}
+              onClick={() => setSortBy(o.key)}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === 'playlists' && <PlaylistList query={query} sortBy={sortBy} onNavigate={onNavigate} />}
+      {tab === 'liked' && <LikedSongs query={query} onNavigate={onNavigate} />}
     </div>
   );
 }

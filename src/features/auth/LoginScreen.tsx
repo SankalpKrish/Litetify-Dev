@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getStoredClientId, login, persistClientId, enableDevMode } from './authStore';
+import { getStoredClientId, login, persistClientId } from './authStore';
 
 type LoginPhase =
   | 'idle'
@@ -134,7 +134,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
             <p className="auth-desc">
               Log in with your Spotify Premium account.
             </p>
-            <button className="auth-btn auth-btn-spotify" onClick={handleLogin}>
+            <button className="auth-btn auth-btn-primary" onClick={handleLogin}>
               <svg
                 width="20"
                 height="20"
@@ -197,19 +197,6 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
             }}
           >
             Change Client ID
-          </button>
-        </div>
-        <div className="auth-dev-section">
-          <hr className="auth-divider" />
-          <p className="auth-hint">Development only — bypasses Spotify login</p>
-          <button
-            className="auth-btn auth-btn-ghost"
-            onClick={() => {
-              enableDevMode();
-              onAuthenticated();
-            }}
-          >
-            Enter Dev Mode
           </button>
         </div>
       </div>

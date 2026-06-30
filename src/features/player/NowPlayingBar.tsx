@@ -4,6 +4,8 @@ import { VolumeControl } from './VolumeControl';
 import { DeviceSelector } from './DeviceSelector';
 import { NowPlayingInfo } from './NowPlayingInfo';
 import { AutoQueueToggle } from './AutoQueueToggle';
+import { SleepTimer } from './SleepTimer';
+import { MiniPlayerToggle } from './MiniPlayer';
 
 export function NowPlayingBar() {
   return (
@@ -16,6 +18,8 @@ export function NowPlayingBar() {
         <ProgressBar />
       </div>
       <div className="player-bar-right">
+        <MiniPlayerToggle />
+        <SleepTimer />
         <AutoQueueToggle />
         <DeviceSelector />
         <VolumeControl />

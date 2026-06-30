@@ -529,6 +529,50 @@ pub async fn api_get_me(client_id: String) -> Result<SpotifyUserProfile, String>
 }
 
 #[tauri::command]
+pub async fn api_create_playlist(
+    client_id: String,
+    name: String,
+    description: Option<String>,
+    public: Option<bool>,
+) -> Result<(), String> {
+    // Get current user's ID
+    let profile: SpotifyUserProfile = get_json(&client_id, "/me", &[]).await?;
+    let path = format!("/users/{}/playlists", profile.id);
+    let mut body = serde_json::json!({ "name": name });
+    if let Some(d) = description {
+        body["description"] = serde_json::json!(d);
+    }
+    if let Some(p) = public {
+        body["public"] = serde_json::json!(p);
+    }
+    call_api::<Option<serde_json::Value>>(&client_id, reqwest::Method::POST, &path, &[], Some(body)).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn api_update_playlist(
+    client_id: String,
+    playlist_id: String,
+    name: Option<String>,
+    description: Option<String>,
+    public: Option<bool>,
+) -> Result<(), String> {
+    let path = format!("/playlists/{playlist_id}");
+    let mut body = serde_json::json!({});
+    if let Some(n) = name {
+        body["name"] = serde_json::json!(n);
+    }
+    if let Some(d) = description {
+        body["description"] = serde_json::json!(d);
+    }
+    if let Some(p) = public {
+        body["public"] = serde_json::json!(p);
+    }
+    call_api::<Option<serde_json::Value>>(&client_id, reqwest::Method::PUT, &path, &[], Some(body)).await?;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn api_get_playlists(
     client_id: String,
     limit: Option<i32>,
@@ -789,6 +833,74 @@ pub async fn api_get_available_devices(client_id: String) -> Result<Vec<Device>,
     }
     let resp: DeviceResponse = get_json(&client_id, "/me/player/devices", &[]).await?;
     Ok(resp.devices)
+}
+
+#[tauri::command]
+pub async fn api_check_follow_artist(
+    client_id: String,
+    artist_id: String,
+) -> Result<bool, String> {
+    let res: Vec<bool> = call_api(
+        &client_id,
+        reqwest::Method::GET,
+        "/me/following/contains",
+        &[("type", "artist"), ("ids", &artist_id)],
+        None,
+    )
+    .await?;
+    Ok(res.first().copied().unwrap_or(false))
+}
+
+#[tauri::command]
+pub async fn api_follow_artist(client_id: String, artist_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::PUT,
+        "/me/following",
+        &[("type", "artist"), ("ids", &artist_id)],
+        None,
+    )
+    .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn api_unfollow_artist(client_id: String, artist_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::DELETE,
+        "/me/following",
+        &[("type", "artist"), ("ids", &artist_id)],
+        None,
+    )
+    .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn api_follow_playlist(client_id: String, playlist_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::PUT,
+        &format!("/playlists/{playlist_id}/followers"),
+        &[],
+        Some(serde_json::json!({ "public": false })),
+    )
+    .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn api_unfollow_playlist(client_id: String, playlist_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::DELETE,
+        &format!("/playlists/{playlist_id}/followers"),
+        &[],
+        None,
+    )
+    .await?;
+    Ok(())
 }
 
 #[tauri::command]

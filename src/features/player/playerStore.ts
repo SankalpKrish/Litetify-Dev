@@ -3,23 +3,41 @@ import type { PlaybackState, PlaybackEngine, PlayContext } from '../../playback/
 
 export type EngineType = 'websdk' | 'librespot';
 
-const initialState: PlaybackState = {
-  uri: null,
-  trackId: null,
-  name: null,
-  artist: null,
-  album: null,
-  albumImage: null,
+function loadEngineType(): EngineType {
+  if (typeof localStorage !== 'undefined') {
+    const stored = localStorage.getItem('litetify:engineType');
+    if (stored === 'librespot' || stored === 'websdk') return stored;
+  }
+  return 'websdk';
+}
+
+function saveEngineType(t: EngineType): void {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('litetify:engineType', t);
+  }
+}
+
+const initialState = {
+  uri: null as string | null,
+  trackId: null as string | null,
+  name: null as string | null,
+  artist: null as string | null,
+  album: null as string | null,
+  albumImage: null as string | null,
   durationMs: 0,
   positionMs: 0,
   isPlaying: false,
   volume: 50,
   shuffle: false,
-  repeat: 'off',
-  deviceId: null,
+  repeat: 'off' as 'off' | 'context' | 'track',
+  deviceId: null as string | null,
+  engine: null as PlaybackEngine | null,
+  engineType: loadEngineType() as EngineType,
 };
 
 export interface PlayerStore extends PlaybackState {
+  engine: PlaybackEngine | null;
+  engineType: EngineType;
   setState: (partial: Partial<PlaybackState>) => void;
   reset: () => void;
   setEngine: (engine: PlaybackEngine) => void;
@@ -29,40 +47,25 @@ export interface PlayerStore extends PlaybackState {
   playTrack: (uri: string, context?: PlayContext) => Promise<void>;
 }
 
-let engineRef: PlaybackEngine | null = null;
-let engineType: EngineType = 'websdk';
-
-export function getStoredEngineType(): EngineType {
-  if (typeof localStorage !== 'undefined') {
-    const stored = localStorage.getItem('litetify:engineType');
-    if (stored === 'librespot' || stored === 'websdk') return stored;
-  }
-  return 'websdk';
-}
-
-export function setStoredEngineType(t: EngineType): void {
-  engineType = t;
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('litetify:engineType', t);
-  }
-}
-
-export const usePlayerStore = create<PlayerStore>((set) => ({
+export const usePlayerStore = create<PlayerStore>((set, get) => ({
   ...initialState,
   setState: (partial) => set(partial),
   reset: () => set(initialState),
   setEngine: (engine) => {
-    engineRef = engine;
     const type: EngineType = engine.name() === 'librespot' ? 'librespot' : 'websdk';
-    setStoredEngineType(type);
-    engineType = type;
+    saveEngineType(type);
+    set({ engine, engineType: type });
   },
-  setEngineType: (t) => { engineType = t; },
-  getEngineType: () => engineType,
-  getEngine: () => engineRef,
+  setEngineType: (t) => {
+    saveEngineType(t);
+    set({ engineType: t });
+  },
+  getEngineType: () => get().engineType,
+  getEngine: () => get().engine,
   playTrack: async (uri: string, context?: PlayContext) => {
-    if (engineRef) {
-      await engineRef.play(uri, context);
+    const eng = get().engine;
+    if (eng) {
+      await eng.play(uri, context);
     }
   },
 }));

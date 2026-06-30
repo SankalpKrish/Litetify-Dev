@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLikedTracks } from '../../lib/queries/useLikedTracks';
 import { formatDuration } from '../../lib/utils';
 import { usePlayerStore } from '../player/playerStore';
@@ -5,13 +6,32 @@ import { useContextMenuStore } from '../contextmenu/contextMenuStore';
 import { TrackMenuButton } from '../contextmenu/TrackMenuButton';
 
 interface LikedSongsProps {
+  query: string;
   onNavigate: (view: string, params?: Record<string, string>) => void;
 }
 
-export function LikedSongs({ onNavigate }: LikedSongsProps) {
+export function LikedSongs({ query, onNavigate }: LikedSongsProps) {
   const { data, isLoading, error } = useLikedTracks(50);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const openContextMenu = useContextMenuStore((s) => s.openMenu);
+
+  const filtered = useMemo(() => {
+    if (!data) return null;
+    let items = data.items;
+    if (query) {
+      const q = query.toLowerCase();
+      items = items.filter((item) => {
+        const t = item.track;
+        if (!t) return false;
+        return (
+          t.name.toLowerCase().includes(q) ||
+          (t.artists && t.artists.some((a) => a.name.toLowerCase().includes(q))) ||
+          (t.album && t.album.name.toLowerCase().includes(q))
+        );
+      });
+    }
+    return { ...data, items };
+  }, [data, query]);
 
   if (isLoading) {
     return (
@@ -30,11 +50,19 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
     );
   }
 
-  if (!data || data.items.length === 0) {
+  if (!filtered || !data || data.items.length === 0) {
     return (
       <div className="empty-state">
         <div className="empty-state-title">No liked songs yet</div>
         <div className="empty-state-desc">Tap the heart icon on any track to save it here.</div>
+      </div>
+    );
+  }
+
+  if (query && filtered.items.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-state-desc">No songs match "{query}".</div>
       </div>
     );
   }
@@ -59,7 +87,7 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
           <div className="detail-type">Playlist</div>
           <h2 className="sr-only">Liked Songs</h2>
           <div className="detail-stats">
-            <strong>{data.total}</strong> song{data.total !== 1 ? 's' : ''}
+            <strong>{filtered.total}</strong> song{filtered.total !== 1 ? 's' : ''}
           </div>
         </div>
       </div>
@@ -68,8 +96,8 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
         <button
           className="play-btn"
           onClick={() => {
-            const queue = data.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
-            const first = data.items[0]?.track;
+            const queue = filtered.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
+            const first = filtered.items[0]?.track;
             if (first) playTrack(first.uri, { uris: queue, offsetUri: first.uri });
           }}
           aria-label="Play"
@@ -90,9 +118,9 @@ export function LikedSongs({ onNavigate }: LikedSongsProps) {
           </tr>
         </thead>
         <tbody>
-          {data.items.map((item, idx) => {
+          {filtered.items.map((item, idx) => {
             const track = item.track;
-            const queue = data.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
+            const queue = filtered.items.map((i) => i.track?.uri).filter((u): u is string => !!u);
             return (
               <tr
                 key={track.id ?? `local-${idx}-${track.uri}`}
