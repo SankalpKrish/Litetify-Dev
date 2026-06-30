@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { PlaylistList } from './PlaylistList';
 import { LikedSongs } from './LikedSongs';
+import { PodcastList } from './PodcastList';
 
 interface LibraryViewProps {
   onNavigate: (view: string, params?: Record<string, string>) => void;
 }
 
-type LibTab = 'playlists' | 'liked';
+type LibTab = 'playlists' | 'liked' | 'podcasts';
 type SortBy = 'name' | 'recent' | 'tracks';
 
 export function LibraryView({ onNavigate }: LibraryViewProps) {
@@ -39,6 +40,12 @@ export function LibraryView({ onNavigate }: LibraryViewProps) {
         >
           Liked Songs
         </button>
+        <button
+          className={`search-tab${tab === 'podcasts' ? ' search-tab-active' : ''}`}
+          onClick={() => setTab('podcasts')}
+        >
+          Podcasts
+        </button>
       </div>
 
       <div className="lib-toolbar">
@@ -67,6 +74,7 @@ export function LibraryView({ onNavigate }: LibraryViewProps) {
 
       {tab === 'playlists' && <PlaylistList query={query} sortBy={sortBy} onNavigate={onNavigate} />}
       {tab === 'liked' && <LikedSongs query={query} onNavigate={onNavigate} />}
+      {tab === 'podcasts' && <PodcastList onNavigate={onNavigate} />}
     </div>
   );
 }

@@ -1127,6 +1127,53 @@ pub struct PlayHistory {
     pub played_at: String,
 }
 
+// ─── Podcast / Shows types ────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpotifyShowPage {
+    pub items: Vec<SpotifyShow>,
+    pub total: i32,
+    pub offset: i32,
+    pub limit: i32,
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SpotifyShow {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub publisher: String,
+    pub images: Vec<SpotifyImage>,
+    pub total_episodes: i32,
+    pub explicit: bool,
+    #[serde(rename = "type")]
+    pub type_: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShowEpisodesPage {
+    pub items: Vec<ShowEpisode>,
+    pub total: i32,
+    pub offset: i32,
+    pub limit: i32,
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ShowEpisode {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub duration_ms: i32,
+    pub explicit: bool,
+    pub release_date: String,
+    pub images: Vec<SpotifyImage>,
+    pub uri: String,
+    #[serde(rename = "type")]
+    pub type_: String,
+}
+
 #[tauri::command]
 pub async fn api_get_top_artists(
     client_id: String,
@@ -1163,6 +1210,67 @@ pub async fn api_get_recently_played(
     let params = query_params(limit, None);
     let refs = to_refs(&params);
     get_json(&client_id, "/me/player/recently-played", &refs).await
+}
+
+// ─── Podcast / Shows commands ───────────────────────────────
+
+#[tauri::command]
+pub async fn api_get_saved_shows(
+    client_id: String,
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<SpotifyShowPage, String> {
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
+    get_json(&client_id, "/me/shows", &refs).await
+}
+
+#[tauri::command]
+pub async fn api_get_show(
+    client_id: String,
+    show_id: String,
+) -> Result<SpotifyShow, String> {
+    let path = format!("/shows/{show_id}");
+    get_json(&client_id, &path, &[]).await
+}
+
+#[tauri::command]
+pub async fn api_get_show_episodes(
+    client_id: String,
+    show_id: String,
+    limit: Option<i32>,
+    offset: Option<i32>,
+) -> Result<ShowEpisodesPage, String> {
+    let path = format!("/shows/{show_id}/episodes");
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
+    get_json(&client_id, &path, &refs).await
+}
+
+#[tauri::command]
+pub async fn api_save_show(client_id: String, show_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::PUT,
+        "/me/shows",
+        &[],
+        Some(serde_json::json!({ "ids": [show_id] })),
+    )
+    .await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn api_remove_show(client_id: String, show_id: String) -> Result<(), String> {
+    call_api::<Option<serde_json::Value>>(
+        &client_id,
+        reqwest::Method::DELETE,
+        "/me/shows",
+        &[("ids", &show_id)],
+        None,
+    )
+    .await?;
+    Ok(())
 }
 
 #[cfg(test)]

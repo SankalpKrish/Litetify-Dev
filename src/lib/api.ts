@@ -21,6 +21,9 @@ import type {
   TopArtists,
   TopTracks,
   RecentlyPlayed,
+  SpotifyShowPage,
+  SpotifyShow,
+  ShowEpisodesPage,
 } from './types';
 import { getStoredClientId } from '../features/auth/authStore';
 
@@ -240,4 +243,24 @@ export async function apiFollowPlaylist(playlistId: string): Promise<void> {
 
 export async function apiUnfollowPlaylist(playlistId: string): Promise<void> {
   return req<void>('api_unfollow_playlist', { playlistId });
+}
+
+export async function apiGetSavedShows(limit?: number, offset?: number): Promise<SpotifyShowPage> {
+  return req<SpotifyShowPage>('api_get_saved_shows', { limit, offset });
+}
+
+export async function apiGetShow(showId: string): Promise<SpotifyShow> {
+  return req<SpotifyShow>('api_get_show', { showId });
+}
+
+export async function apiGetShowEpisodes(showId: string, limit?: number, offset?: number): Promise<ShowEpisodesPage> {
+  return req<ShowEpisodesPage>('api_get_show_episodes', { showId, limit, offset });
+}
+
+export async function apiSaveShow(showId: string): Promise<void> {
+  return req<void>('api_save_show', { showId });
+}
+
+export async function apiRemoveShow(showId: string): Promise<void> {
+  return req<void>('api_remove_show', { showId });
 }

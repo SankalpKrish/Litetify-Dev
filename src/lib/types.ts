@@ -261,3 +261,42 @@ export interface PlayHistory {
 export interface RecentlyPlayed {
   items: PlayHistory[];
 }
+
+export interface SpotifyShowPage {
+  items: SpotifyShow[];
+  total: number;
+  offset: number;
+  limit: number;
+  next: string | null;
+}
+
+export interface SpotifyShow {
+  id: string;
+  name: string;
+  description: string;
+  publisher: string;
+  images: SpotifyImage[];
+  total_episodes: number;
+  explicit: boolean;
+  type_: string;
+}
+
+export interface ShowEpisode {
+  id: string;
+  name: string;
+  description: string | null;
+  duration_ms: number;
+  explicit: boolean;
+  release_date: string;
+  images: SpotifyImage[];
+  uri: string;
+  type_: string;
+}
+
+export interface ShowEpisodesPage {
+  items: ShowEpisode[];
+  total: number;
+  offset: number;
+  limit: number;
+  next: string | null;
+}

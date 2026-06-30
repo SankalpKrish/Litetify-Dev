@@ -25,6 +25,7 @@ const ArtistView = lazy(() => import('./features/library/ArtistView').then((m) =
 const SettingsView = lazy(() => import('./features/settings/SettingsView').then((m) => ({ default: m.SettingsView })));
 const NowPlayingView = lazy(() => import('./features/player/NowPlayingView').then((m) => ({ default: m.NowPlayingView })));
 const StatsView = lazy(() => import('./features/stats/StatsView').then((m) => ({ default: m.StatsView })));
+const PodcastView = lazy(() => import('./features/podcasts/PodcastView').then((m) => ({ default: m.PodcastView })));
 
 onlineManager.setOnline(navigator.onLine);
 window.addEventListener('online', () => onlineManager.setOnline(true));
@@ -50,7 +51,8 @@ type View =
   | { name: 'artist'; id: string }
   | { name: 'mod'; modId: string }
   | { name: 'now-playing' }
-  | { name: 'stats' };
+  | { name: 'stats' }
+  | { name: 'podcast'; id: string };
 
 function AppShell(): React.JSX.Element {
   const isMini = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('mini') === '1';
@@ -165,6 +167,7 @@ function AppShell(): React.JSX.Element {
       case 'mod': pushView({ name: 'mod', modId: params?.modId ?? '' }); break;
       case 'now-playing': pushView({ name: 'now-playing' }); break;
       case 'stats': pushView({ name: 'stats' }); break;
+      case 'podcast': pushView({ name: 'podcast', id: params?.id ?? '' }); break;
     }
   }, []);
 
@@ -258,6 +261,9 @@ function AppShell(): React.JSX.Element {
             )}
             {currentView.name === 'stats' && (
               <StatsView onNavigate={handleNavigate} />
+            )}
+            {currentView.name === 'podcast' && (
+              <PodcastView showId={currentView.id} onNavigate={handleNavigate} />
             )}
             {currentView.name === 'mod' && (
               <div className="mod-view">
