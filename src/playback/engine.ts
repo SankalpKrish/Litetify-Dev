@@ -6,6 +6,7 @@ export interface PlaybackState {
   name: string | null;
   artist: string | null;
   album: string | null;
+  albumUri: string | null;
   albumImage: string | null;
   durationMs: number;
   positionMs: number;

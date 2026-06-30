@@ -23,6 +23,7 @@ const initialState = {
   name: null as string | null,
   artist: null as string | null,
   album: null as string | null,
+  albumUri: null as string | null,
   albumImage: null as string | null,
   durationMs: 0,
   positionMs: 0,

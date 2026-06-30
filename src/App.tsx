@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import { checkAuth } from './features/auth/authStore';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { NowPlayingBar } from './features/player/NowPlayingBar';
@@ -11,6 +11,7 @@ import { ContextMenu, setContextMenuNavigate } from './features/contextmenu/Cont
 import { ErrorBoundary } from './lib/ErrorBoundary';
 import { useKeyboardShortcuts } from './lib/useKeyboardShortcuts';
 import { MiniPlayerView } from './features/player/MiniPlayerView';
+import { OfflineBanner } from './features/player/OfflineBanner';
 import { initMods, useModsStore } from './mods';
 import { Toast } from './features/settings/Toast';
 import { setToastCallbacks, setSidebarItemCallbacks } from './mods/api';
@@ -22,6 +23,12 @@ const PlaylistDetail = lazy(() => import('./features/library/PlaylistDetail').th
 const AlbumView = lazy(() => import('./features/library/AlbumView').then((m) => ({ default: m.AlbumView })));
 const ArtistView = lazy(() => import('./features/library/ArtistView').then((m) => ({ default: m.ArtistView })));
 const SettingsView = lazy(() => import('./features/settings/SettingsView').then((m) => ({ default: m.SettingsView })));
+const NowPlayingView = lazy(() => import('./features/player/NowPlayingView').then((m) => ({ default: m.NowPlayingView })));
+const StatsView = lazy(() => import('./features/stats/StatsView').then((m) => ({ default: m.StatsView })));
+
+onlineManager.setOnline(navigator.onLine);
+window.addEventListener('online', () => onlineManager.setOnline(true));
+window.addEventListener('offline', () => onlineManager.setOnline(false));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,7 +48,9 @@ type View =
   | { name: 'playlist'; id: string }
   | { name: 'album'; id: string }
   | { name: 'artist'; id: string }
-  | { name: 'mod'; modId: string };
+  | { name: 'mod'; modId: string }
+  | { name: 'now-playing' }
+  | { name: 'stats' };
 
 function AppShell(): React.JSX.Element {
   const isMini = typeof window !== 'undefined' && new URL(window.location.href).searchParams.get('mini') === '1';
@@ -154,11 +163,22 @@ function AppShell(): React.JSX.Element {
       case 'album': pushView({ name: 'album', id: params?.id ?? '' }); break;
       case 'artist': pushView({ name: 'artist', id: params?.id ?? '' }); break;
       case 'mod': pushView({ name: 'mod', modId: params?.modId ?? '' }); break;
+      case 'now-playing': pushView({ name: 'now-playing' }); break;
+      case 'stats': pushView({ name: 'stats' }); break;
     }
   }, []);
 
   useEffect(() => {
     setContextMenuNavigate(handleNavigate);
+  }, [handleNavigate]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const view = (e as CustomEvent).detail;
+      if (typeof view === 'string') handleNavigate(view);
+    };
+    window.addEventListener('litetify:navigate', handler);
+    return () => window.removeEventListener('litetify:navigate', handler);
   }, [handleNavigate]);
 
   useKeyboardShortcuts();
@@ -233,6 +253,12 @@ function AppShell(): React.JSX.Element {
             {currentView.name === 'artist' && (
               <ArtistView artistId={currentView.id} onNavigate={handleNavigate} />
             )}
+            {currentView.name === 'now-playing' && (
+              <NowPlayingView onNavigate={handleNavigate} onBack={goBack} />
+            )}
+            {currentView.name === 'stats' && (
+              <StatsView onNavigate={handleNavigate} />
+            )}
             {currentView.name === 'mod' && (
               <div className="mod-view">
                 {customViews.has(currentView.modId) ? (
@@ -244,6 +270,7 @@ function AppShell(): React.JSX.Element {
             )}
           </Suspense>
         </main>
+        <OfflineBanner />
         <NowPlayingBar />
       </div>
       {toast && (

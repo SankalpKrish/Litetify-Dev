@@ -7,9 +7,13 @@ function NowPlayingInfoInner() {
   const albumImage = usePlayerStore((s) => s.albumImage);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
+  const goNowPlaying = () => {
+    window.dispatchEvent(new CustomEvent('litetify:navigate', { detail: 'now-playing' }));
+  };
+
   if (!name) {
     return (
-      <div className="np-info np-empty">
+      <div className="np-info np-empty" onClick={goNowPlaying}>
         <div className="np-art" />
         <div className="np-text">
           <span className="np-name np-placeholder">No track playing</span>
@@ -19,7 +23,7 @@ function NowPlayingInfoInner() {
   }
 
   return (
-    <div className={`np-info ${isPlaying ? '' : 'np-paused'}`}>
+    <div className={`np-info ${isPlaying ? '' : 'np-paused'}`} onClick={goNowPlaying}>
       {albumImage ? (
         <img className="np-art" src={albumImage} alt="" />
       ) : (

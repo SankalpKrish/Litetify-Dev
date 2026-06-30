@@ -44,6 +44,7 @@ interface SpotifyTrackWindow {
     artists: { name: string; uri: string }[];
     album: {
       name: string;
+      uri: string;
       images: { url: string }[];
     };
     duration_ms: number;
@@ -83,6 +84,7 @@ function mapState(sdkState: SpotifyPlayerState): Partial<PlaybackState> {
     name: track.name,
     artist: track.artists.map((a) => a.name).join(', '),
     album: track.album.name,
+    albumUri: track.album.uri,
     albumImage: track.album.images[0]?.url ?? null,
     durationMs: track.duration_ms,
     positionMs: sdkState.position,

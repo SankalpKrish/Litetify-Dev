@@ -523,6 +523,17 @@ async fn get_json<T: DeserializeOwned>(client_id: &str, path: &str, query: &[(&s
     call_api(client_id, reqwest::Method::GET, path, query, None).await
 }
 
+fn query_params(limit: Option<i32>, offset: Option<i32>) -> Vec<(&'static str, String)> {
+    let mut p = Vec::new();
+    if let Some(l) = limit { p.push(("limit", l.to_string())); }
+    if let Some(o) = offset { p.push(("offset", o.to_string())); }
+    p
+}
+
+fn to_refs<'a>(params: &'a [(&'static str, String)]) -> Vec<(&'a str, &'a str)> {
+    params.iter().map(|(k, v)| (*k, v.as_str())).collect()
+}
+
 #[tauri::command]
 pub async fn api_get_me(client_id: String) -> Result<SpotifyUserProfile, String> {
     get_json(&client_id, "/me", &[]).await
@@ -578,14 +589,8 @@ pub async fn api_get_playlists(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<SpotifyPlaylists, String> {
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
     get_json(&client_id, "/me/playlists", &refs).await
 }
 
@@ -616,14 +621,8 @@ pub async fn api_get_playlist_tracks(
     // `market` is intentionally omitted: with a user access token Spotify applies
     // the account's country automatically. The legacy `from_token` value is no
     // longer accepted by the endpoint validator and returns HTTP 400.
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
     get_json(&client_id, &path, &refs).await
 }
 
@@ -633,14 +632,8 @@ pub async fn api_get_liked_tracks(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<LikedTracks, String> {
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
     get_json(&client_id, "/me/tracks", &refs).await
 }
 
@@ -680,14 +673,9 @@ pub async fn api_get_artist_albums(
     offset: Option<i32>,
 ) -> Result<ArtistAlbums, String> {
     let path = format!("/artists/{artist_id}/albums");
-    let mut params: Vec<(&str, String)> = vec![("include_groups", "album,single".into())];
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let mut params = query_params(limit, offset);
+    params.insert(0, ("include_groups", "album,single".into()));
+    let refs = to_refs(&params);
     get_json(&client_id, &path, &refs).await
 }
 
@@ -710,17 +698,10 @@ pub async fn api_search(
 ) -> Result<SearchResult, String> {
     // `market` omitted: Spotify uses the user account's country from the access
     // token. Passing `from_token` here returns HTTP 400 from the search endpoint.
-    let mut params: Vec<(&str, String)> = vec![
-        ("q", query),
-        ("type", types),
-    ];
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let mut params = query_params(limit, offset);
+    params.insert(0, ("type", types));
+    params.insert(0, ("q", query));
+    let refs = to_refs(&params);
     get_json(&client_id, "/search", &refs).await
 }
 
@@ -730,14 +711,8 @@ pub async fn api_get_new_releases(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<NewReleases, String> {
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
     get_json(&client_id, "/browse/new-releases", &refs).await
 }
 
@@ -747,14 +722,8 @@ pub async fn api_get_featured_playlists(
     limit: Option<i32>,
     offset: Option<i32>,
 ) -> Result<FeaturedPlaylists, String> {
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, offset);
+    let refs = to_refs(&params);
     get_json(&client_id, "/browse/featured-playlists", &refs).await
 }
 
@@ -777,7 +746,7 @@ pub async fn api_get_recommendations(
         params.push(("seed_genres", g));
     }
     params.push(("limit", limit.unwrap_or(10).to_string()));
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let refs = to_refs(&params);
     get_json(&client_id, "/recommendations", &refs).await
 }
 
@@ -1166,19 +1135,9 @@ pub async fn api_get_top_artists(
     #[allow(non_snake_case)]
     timeRange: Option<String>,
 ) -> Result<TopArtists, String> {
-    let mut params: Vec<(&str, String)> = vec![];
-    if let Some(tr) = timeRange {
-        params.push(("time_range", tr));
-    } else {
-        params.push(("time_range", "medium_term".into()));
-    }
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let mut params = query_params(limit, offset);
+    params.insert(0, ("time_range", timeRange.unwrap_or_else(|| "medium_term".into())));
+    let refs = to_refs(&params);
     get_json(&client_id, "/me/top/artists", &refs).await
 }
 
@@ -1190,19 +1149,9 @@ pub async fn api_get_top_tracks(
     #[allow(non_snake_case)]
     timeRange: Option<String>,
 ) -> Result<TopTracks, String> {
-    let mut params: Vec<(&str, String)> = vec![];
-    if let Some(tr) = timeRange {
-        params.push(("time_range", tr));
-    } else {
-        params.push(("time_range", "medium_term".into()));
-    }
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    if let Some(o) = offset {
-        params.push(("offset", o.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let mut params = query_params(limit, offset);
+    params.insert(0, ("time_range", timeRange.unwrap_or_else(|| "medium_term".into())));
+    let refs = to_refs(&params);
     get_json(&client_id, "/me/top/tracks", &refs).await
 }
 
@@ -1211,11 +1160,8 @@ pub async fn api_get_recently_played(
     client_id: String,
     limit: Option<i32>,
 ) -> Result<RecentlyPlayed, String> {
-    let mut params: Vec<(&str, String)> = Vec::new();
-    if let Some(l) = limit {
-        params.push(("limit", l.to_string()));
-    }
-    let refs: Vec<(&str, &str)> = params.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let params = query_params(limit, None);
+    let refs = to_refs(&params);
     get_json(&client_id, "/me/player/recently-played", &refs).await
 }
 

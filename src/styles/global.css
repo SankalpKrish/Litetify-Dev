@@ -1334,6 +1334,25 @@ a {
   justify-content: center;
 }
 
+/* ─── Offline Banner ────────────────────────────────────── */
+
+.offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lt-space-sm);
+  padding: var(--lt-space-xs) var(--lt-space-md);
+  background: var(--lt-warning, #f59e0b);
+  color: #000;
+  font-size: var(--lt-font-size-xs);
+  font-weight: var(--lt-font-weight-medium);
+  position: fixed;
+  bottom: var(--player-bar-height, 72px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+}
+
 /* ─── Mini Player ───────────────────────────────────────── */
 
 .mini-player {

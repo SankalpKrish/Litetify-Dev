@@ -52,7 +52,7 @@ export function PlayerInitializer() {
           .then((data) => {
             // null when nothing is playing (Spotify 204)
             const cp = data as {
-              item?: { name?: string; uri?: string; duration_ms?: number; artists?: { name: string }[]; album?: { images?: { url: string }[]; name?: string } } | null;
+              item?: { name?: string; uri?: string; duration_ms?: number; artists?: { name: string }[]; album?: { images?: { url: string }[]; name?: string; uri?: string } } | null;
               is_playing?: boolean;
               progress_ms?: number | null;
             } | null;
@@ -65,6 +65,7 @@ export function PlayerInitializer() {
                 isPlaying: cp.is_playing ?? false,
                 artist: cp.item.artists?.map((a) => a.name).join(', ') ?? null,
                 album: cp.item.album?.name ?? null,
+                albumUri: cp.item.album?.uri ?? null,
                 albumImage: cp.item.album?.images?.[0]?.url ?? null,
               });
             }

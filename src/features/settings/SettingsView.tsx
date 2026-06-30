@@ -4,13 +4,14 @@ import { ModsSettings } from './Mods';
 import { PlaybackSettings } from './Playback';
 import { PermissionsSettings } from './Permissions';
 import { KeybindingsSettings } from './Keybindings';
+import { EqualizerSettings } from './EqualizerSettings';
 import { logout } from '../../features/auth/authStore';
 
 interface SettingsViewProps {
   onLogout: () => void;
 }
 
-type SettingsTab = 'playback' | 'mods' | 'permissions' | 'keybindings' | 'account';
+type SettingsTab = 'playback' | 'mods' | 'permissions' | 'keybindings' | 'equalizer' | 'account';
 
 export function SettingsView({ onLogout }: SettingsViewProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('playback');
@@ -50,6 +51,12 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
           Shortcuts
         </button>
         <button
+          className={`settings-tab${activeTab === 'equalizer' ? ' settings-tab-active' : ''}`}
+          onClick={() => setActiveTab('equalizer')}
+        >
+          Equalizer
+        </button>
+        <button
           className={`settings-tab${activeTab === 'account' ? ' settings-tab-active' : ''}`}
           onClick={() => setActiveTab('account')}
         >
@@ -61,6 +68,7 @@ export function SettingsView({ onLogout }: SettingsViewProps) {
         {activeTab === 'mods' && <ModsSettings />}
         {activeTab === 'permissions' && <PermissionsSettings />}
         {activeTab === 'keybindings' && <KeybindingsSettings />}
+        {activeTab === 'equalizer' && <EqualizerSettings />}
         {activeTab === 'account' && (
           <div className="settings-page">
             <div className="settings-header">
